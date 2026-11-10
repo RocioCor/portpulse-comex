@@ -28,3 +28,6 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Keep terminal storage and empty-container return as independent deadline fields; never derive a shipping-line deadline from storage or a presumed free-day allowance.
+- Centralize deadline evaluation in the browser-safe store helpers; preserve legacy date-only values as end-of-day deadlines so existing requests remain readable.
