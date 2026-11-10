@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { I18nProvider, useI18n } from "@/lib/i18n";
-import { useRequests, daysLeft, deadlineStatus, applyStage, type Stage, type Win, type Req } from "@/lib/store";
+import { useRequests, deadlineStatus, applyStage, type Stage, type Win, type Req } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
