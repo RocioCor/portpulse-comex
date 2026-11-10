@@ -31,3 +31,4 @@ use the editor.
 
 - Keep terminal storage and empty-container return as independent deadline fields; never derive a shipping-line deadline from storage or a presumed free-day allowance.
 - Centralize deadline evaluation in the browser-safe store helpers; preserve legacy date-only values as end-of-day deadlines so existing requests remain readable.
+- Render the browser-local request dashboard after hydration to avoid mismatches from dynamic demo timestamps and local timezone formatting.

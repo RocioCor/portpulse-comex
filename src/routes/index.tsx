@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { I18nProvider, useI18n } from "@/lib/i18n";
 import { useRequests, deadlineStatus, applyStage, type Stage, type Win, type Req } from "@/lib/store";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
-  component: () => <I18nProvider><App /></I18nProvider>,
+  component: () => <I18nProvider><ClientOnly><App /></ClientOnly></I18nProvider>,
 });
 
 const STAGES: Stage[] = ["pending", "sim_active", "ready", "completed"];
@@ -81,7 +81,7 @@ function Stat({ label, value, tone = "bg-navy-foreground/10" }: { label: string;
   return <div className={`rounded-lg p-4 ${tone}`}><div className="text-3xl font-bold font-mono">{value}</div><div className="text-sm">{label}</div></div>;
 }
 
-function Deadline({ iso, kind, now }: { iso?: string; kind: "storage" | "demurrage"; now: number }) {
+function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage" | "demurrage"; now: number }) {
   const { t, lang } = useI18n();
   const status = deadlineStatus(iso, now);
   const cls = status === "expired" ? "bg-danger text-navy-foreground" : status === "warning" ? "bg-warning text-foreground" : "bg-muted text-foreground";
