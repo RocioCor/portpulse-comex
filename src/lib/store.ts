@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 export type Stage = "pending" | "released" | "sim_active" | "ready" | "completed";
 export type Win = "not_open" | "open" | "closed";
-export type Req = { id: string; decl: string; port: string; storage: string; demurrage?: string; win: Win; auto: boolean; stage: Stage; simOpenedAt?: number; notifiedAt?: number; releasedAt?: number; bookedAt?: number; createdAt: number };
+export type Req = { id: string; decl: string; port: string; storage: string; demurrage?: string; win: Win; auto: boolean; stage: Stage; simOpenedAt?: number; notifiedAt?: number; releasedAt?: number; bookedAt?: number | undefined; createdAt: number };
 const day = (o: number) => { const d = new Date(); d.setDate(d.getDate() + o); return d.toISOString().slice(0, 10); };
 const now = Date.now();
 const seed: Req[] = [
