@@ -1,7 +1,7 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { I18nProvider, useI18n } from "@/lib/i18n";
-import { useRequests, deadlineStatus, applyStage, turnReminder, freeDaysLeft, type Stage, type Win, type Req } from "@/lib/store";
+import { useRequests, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storageFromEntry, type Stage, type Win, type Req } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -55,7 +55,7 @@ function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 grid lg:grid-cols-[380px_1fr] gap-8">
-        <NewForm onAdd={(r) => { add(r); setToast(`${r.decl} ${t.savedMsg}`); setTimeout(() => setToast(""), 4000); }} />
+        <div className="space-y-8 min-w-0"><NewForm onAdd={(r) => { add(r); setToast(`${r.decl} ${t.savedMsg}`); setTimeout(() => setToast(""), 4000); }} /><WhatsApp items={open} now={now} /></div>
         <section>
           <h2 className="text-xl font-bold mb-3">{t.reqs}</h2>
           <input className={input + " mb-3"} placeholder={t.search} value={q} onChange={(e) => setQ(e.target.value)} />
@@ -108,7 +108,7 @@ function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: 
         <span className={`self-start px-3 py-1 rounded-full border-2 text-sm font-semibold ${stageCls[r.stage]}`}>{t.st[r.stage]}</span>
       </div>
       <div className="mt-4 grid sm:grid-cols-2 gap-4">
-        <Deadline iso={r.storage} kind="storage" now={now} />
+        <div>{r.entry && <div className="text-xs text-muted-foreground pl-3 mb-1">{t.entryLbl}: {new Date(r.entry.length === 10 ? r.entry + "T00:00" : r.entry).toLocaleDateString(lang === "es" ? "es-CL" : "en-GB")}</div>}<Deadline iso={r.storage} kind="storage" now={now} /></div>
         <Deadline iso={r.demurrage} kind="demurrage" now={now} />
       </div>
       {r.stage === "released" && <div className={`mt-3 rounded-lg p-3 ${tr ? "bg-warning" : "bg-success/20"}`}>
@@ -134,13 +134,13 @@ function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: 
 
 function NewForm({ onAdd }: { onAdd: (r: Req) => void }) {
   const { t } = useI18n();
-  const [f, setF] = useState({ decl: "", port: "", storage: "", demurrage: "", win: "not_open" as Win, auto: true });
+  const [f, setF] = useState({ decl: "", port: "", entry: "", demurrage: "", win: "not_open" as Win, auto: true });
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!f.decl.trim() || !f.port.trim() || !f.storage || !f.demurrage) return;
-    let r: Req = { id: crypto.randomUUID(), decl: f.decl.trim().slice(0, 40), port: f.port.trim().slice(0, 80), storage: f.storage, demurrage: f.demurrage, win: f.win, auto: f.auto, stage: "pending", createdAt: Date.now() };
+    if (!f.decl.trim() || !f.port.trim() || !f.entry || !f.demurrage) return;
+    let r: Req = { id: crypto.randomUUID(), decl: f.decl.trim().slice(0, 40), port: f.port.trim().slice(0, 80), entry: f.entry, storage: storageFromEntry(f.entry), demurrage: f.demurrage, win: f.win, auto: f.auto, stage: "pending", createdAt: Date.now() };
     if (f.win === "open") r = applyStage(r, "sim_active");
-    onAdd(r); setF({ decl: "", port: "", storage: "", demurrage: "", win: "not_open", auto: true });
+    onAdd(r); setF({ decl: "", port: "", entry: "", demurrage: "", win: "not_open", auto: true });
   };
   return (
     <form onSubmit={submit} className="space-y-4 self-start min-w-0">
@@ -148,8 +148,9 @@ function NewForm({ onAdd }: { onAdd: (r: Req) => void }) {
       <label className="block font-medium">{t.decl}<input required maxLength={40} className={input + " mt-1 font-mono"} placeholder="DIN-2026-000000" value={f.decl} onChange={(e) => setF({ ...f, decl: e.target.value })} /></label>
       <label className="block font-medium">{t.port}<input required maxLength={80} className={input + " mt-1"} placeholder="San Antonio" value={f.port} onChange={(e) => setF({ ...f, port: e.target.value })} /></label>
       <div>
-        <label className="block font-medium">{t.storage}<input required type="datetime-local" aria-describedby="storage-hint" className={input + " mt-1 min-w-0 max-w-full text-base"} value={f.storage} onChange={(e) => setF({ ...f, storage: e.target.value })} /></label>
-        <p id="storage-hint" className="mt-2 text-sm text-muted-foreground">{t.storageHint}</p>
+        <label className="block font-medium">{t.entry}<input required type="datetime-local" aria-describedby="storage-hint" className={input + " mt-1 min-w-0 max-w-full text-base"} value={f.entry} onChange={(e) => setF({ ...f, entry: e.target.value })} /></label>
+        <p id="storage-hint" className="mt-2 text-sm text-muted-foreground">{t.entryHint}</p>
+        {f.entry && <p className="mt-1 text-sm font-semibold">{t.calcDeadline}: {new Date(storageFromEntry(f.entry)).toLocaleString()}</p>}
       </div>
       <div>
         <label className="block font-medium">{t.demurrage}<input required type="datetime-local" aria-describedby="demurrage-hint" className={input + " mt-1 min-w-0 max-w-full text-base"} value={f.demurrage} onChange={(e) => setF({ ...f, demurrage: e.target.value })} /></label>
@@ -167,5 +168,32 @@ function NewForm({ onAdd }: { onAdd: (r: Req) => void }) {
       </label>
       <Button type="submit" className="w-full h-14 text-lg">{t.submit}</Button>
     </form>
+  );
+}
+
+function WhatsApp({ items, now }: { items: Req[]; now: number }) {
+  const { t, lang } = useI18n();
+  const [num, setNum] = useState("");
+  useEffect(() => { setNum(localStorage.getItem("wa") ?? "+56 9 1234 5678"); }, []);
+  const es = lang === "es";
+  const msgs: string[] = [];
+  for (const r of items) {
+    const tr = turnReminder(r, now);
+    if (tr) msgs.push(es ? `🔔 ${r.decl}: aviso n.º ${tr.count}, pedir turno en terminal (${r.port}).` : `🔔 ${r.decl}: reminder #${tr.count}, request terminal slot (${r.port}).`);
+    const s = deadlineStatus(r.storage, now);
+    if (s === "warning" || s === "expired") msgs.push(es ? `⚠️ ${r.decl}: ${s === "expired" ? "venció" : "vence en menos de 48 h"} el plazo de 30 días en depósito fiscal.` : `⚠️ ${r.decl}: 30-day bonded storage ${s === "expired" ? "expired" : "expires within 48h"}.`);
+    const d = deadlineStatus(r.demurrage, now, 24);
+    if (d === "warning" || d === "expired") msgs.push(es ? `🚢 ${r.decl}: ${d === "expired" ? "venció" : "vence en menos de 24 h"} la devolución del contenedor vacío.` : `🚢 ${r.decl}: empty container return ${d === "expired" ? "expired" : "due within 24h"}.`);
+  }
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-bold">💬 {t.wa}</h2>
+      <label className="block font-medium">{t.waNum}<input type="tel" maxLength={20} className={input + " mt-1"} value={num} onChange={(e) => { setNum(e.target.value); localStorage.setItem("wa", e.target.value); }} /></label>
+      <p className="text-sm text-muted-foreground">{t.waHint}</p>
+      <div className="rounded-lg bg-success/10 p-3 space-y-2">
+        {msgs.length === 0 && <p className="text-sm text-muted-foreground">{t.waNone}</p>}
+        {msgs.map((m, i) => <div key={i} className="rounded-lg bg-card border border-border p-3 text-sm"><div>{m}</div><div className="text-xs text-muted-foreground mt-1">✓✓ {t.waSent} {num}</div></div>)}
+      </div>
+    </section>
   );
 }
