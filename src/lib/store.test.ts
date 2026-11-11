@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { storageFromEntry, turnReminder, applyStage, deadlineStatus, deadlineTime, type Req } from "./store";
+import { demurrageFromEntry, demurrageValid, storageFromEntry, turnReminder, applyStage, deadlineStatus, deadlineTime, type Req } from "./store";
 const base: Req = { id: "x", decl: "D", port: "P", storage: "2026-01-01", win: "not_open", auto: true, stage: "pending", createdAt: 0 };
 describe("SIM auto-trigger", () => {
   it("sends notice when auto is on", () => expect(applyStage(base, "sim_active", 5).notifiedAt).toBe(5));
@@ -43,4 +43,10 @@ describe("Terminal slot reminders and naviera 24h alert", () => {
 });
 describe("Bonded warehouse 30-day storage", () => {
   it("sets the deadline 30 days after entry", () => expect(storageFromEntry("2026-11-01T10:00")).toBe("2026-12-01T10:00"));
+});
+describe("Shipping line free days", () => {
+  it("adds 5 days for standard containers", () => expect(demurrageFromEntry("2026-11-01T10:00", 5)).toBe("2026-11-06T10:00"));
+  it("adds 10 days for special equipment", () => expect(demurrageFromEntry("2026-11-01T10:00", 10)).toBe("2026-11-11T10:00"));
+  it("rejects a 30-day naviera deadline", () => expect(demurrageValid("2026-11-01T10:00", "2026-12-01T10:00")).toBe(false));
+  it("accepts a deadline within 10 days", () => expect(demurrageValid("2026-11-01T10:00", "2026-11-08T10:00")).toBe(true));
 });

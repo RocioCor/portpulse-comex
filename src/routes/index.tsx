@@ -1,7 +1,7 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { I18nProvider, useI18n } from "@/lib/i18n";
-import { useRequests, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storageFromEntry, type Stage, type Win, type Req } from "@/lib/store";
+import { useRequests, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storageFromEntry, demurrageFromEntry, demurrageValid, DEMURRAGE_MAX_DAYS, type Stage, type Win, type Req } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -136,13 +136,16 @@ function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: 
 
 function NewForm({ onAdd }: { onAdd: (r: Req) => void }) {
   const { t } = useI18n();
-  const [f, setF] = useState({ decl: "", port: "", entry: "", demurrage: "", win: "not_open" as Win, auto: true });
+  const [f, setF] = useState({ decl: "", port: "", entry: "", demurrage: "", days: 5, win: "not_open" as Win, auto: true });
+  const [err, setErr] = useState("");
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!f.decl.trim() || !f.port.trim() || !f.entry || !f.demurrage) return;
+    if (!demurrageValid(f.entry, f.demurrage)) { setErr(t.demErr); return; }
+    setErr("");
     let r: Req = { id: crypto.randomUUID(), decl: f.decl.trim().slice(0, 40), port: f.port.trim().slice(0, 80), entry: f.entry, storage: storageFromEntry(f.entry), demurrage: f.demurrage, win: f.win, auto: f.auto, stage: "pending", createdAt: Date.now() };
     if (f.win === "open") r = applyStage(r, "sim_active");
-    onAdd(r); setF({ decl: "", port: "", entry: "", demurrage: "", win: "not_open", auto: true });
+    onAdd(r); setF({ decl: "", port: "", entry: "", demurrage: "", days: 5, win: "not_open", auto: true });
   };
   return (
     <form onSubmit={submit} className="space-y-4 self-start min-w-0">
@@ -150,13 +153,20 @@ function NewForm({ onAdd }: { onAdd: (r: Req) => void }) {
       <label className="block font-medium">{t.decl}<input required maxLength={40} className={input + " mt-1 font-mono"} placeholder="DIN-2026-000000" value={f.decl} onChange={(e) => setF({ ...f, decl: e.target.value })} /></label>
       <label className="block font-medium">{t.port}<input required maxLength={80} className={input + " mt-1"} placeholder="San Antonio" value={f.port} onChange={(e) => setF({ ...f, port: e.target.value })} /></label>
       <div>
-        <label className="block font-medium">{t.entry}<input required type="datetime-local" aria-describedby="storage-hint" className={input + " mt-1 min-w-0 max-w-full text-base"} value={f.entry} onChange={(e) => setF({ ...f, entry: e.target.value })} /></label>
+        <label className="block font-medium">{t.entry}<input required type="datetime-local" aria-describedby="storage-hint" className={input + " mt-1 min-w-0 max-w-full text-base"} value={f.entry} onChange={(e) => setF({ ...f, entry: e.target.value, demurrage: e.target.value ? demurrageFromEntry(e.target.value, f.days) : "" })} /></label>
         <p id="storage-hint" className="mt-2 text-sm text-muted-foreground">{t.entryHint}</p>
         {f.entry && <p className="mt-1 text-sm font-semibold">{t.calcDeadline}: {new Date(storageFromEntry(f.entry)).toLocaleString()}</p>}
       </div>
       <div>
-        <label className="block font-medium">{t.demurrage}<input required type="datetime-local" aria-describedby="demurrage-hint" className={input + " mt-1 min-w-0 max-w-full text-base"} value={f.demurrage} onChange={(e) => setF({ ...f, demurrage: e.target.value })} /></label>
+        <label className="block font-medium">{t.contType}
+          <select className={input + " mt-1"} value={f.days} onChange={(e) => { const days = Number(e.target.value); setF({ ...f, days, demurrage: f.entry ? demurrageFromEntry(f.entry, days) : f.demurrage }); }}>
+            <option value={5}>{t.cont5}</option><option value={10}>{t.cont10}</option>
+          </select></label>
+      </div>
+      <div>
+        <label className="block font-medium">{t.demurrage}<input required type="datetime-local" min={f.entry || undefined} max={f.entry ? demurrageFromEntry(f.entry, DEMURRAGE_MAX_DAYS) : undefined} aria-describedby="demurrage-hint" className={input + " mt-1 min-w-0 max-w-full text-base"} value={f.demurrage} onChange={(e) => setF({ ...f, demurrage: e.target.value })} /></label>
         <p id="demurrage-hint" className="mt-2 text-sm text-muted-foreground">{t.demurrageHint}</p>
+        {err && <p role="alert" className="mt-1 text-sm font-bold text-danger">{err}</p>}
       </div>
       <p className="border-l-2 border-warning pl-3 text-sm text-muted-foreground">{t.alertHint}</p>
       <label className="block font-medium">{t.sim}

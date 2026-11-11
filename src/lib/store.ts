@@ -5,10 +5,10 @@ export type Req = { id: string; decl: string; port: string; entry?: string; stor
 const day = (o: number) => { const d = new Date(); d.setDate(d.getDate() + o); return d.toISOString().slice(0, 10); };
 const now = Date.now();
 const seed: Req[] = [
-  { id: "1", decl: "DIN-2026-004581", port: "San Antonio", entry: day(-30), storage: day(0), demurrage: day(7), win: "open", auto: true, stage: "sim_active", simOpenedAt: now - 75 * 60000, notifiedAt: now - 75 * 60000, createdAt: now },
-  { id: "2", decl: "DIN-2026-004602", port: "Valparaíso", entry: day(-29), storage: day(1), demurrage: day(10), win: "not_open", auto: true, stage: "pending", createdAt: now },
-  { id: "3", decl: "DIN-2026-004377", port: "Punta Arenas", entry: day(-25), storage: day(5), demurrage: day(1), win: "closed", auto: false, stage: "ready", createdAt: now },
-  { id: "4", decl: "DIN-2026-004120", port: "Iquique", entry: day(-21), storage: day(9), demurrage: day(14), win: "closed", auto: true, stage: "completed", createdAt: now },
+  { id: "1", decl: "DIN-2026-004581", port: "San Antonio", entry: day(-4), storage: day(26), demurrage: day(1), win: "open", auto: true, stage: "sim_active", simOpenedAt: now - 75 * 60000, notifiedAt: now - 75 * 60000, createdAt: now },
+  { id: "2", decl: "DIN-2026-004602", port: "Valparaíso", entry: day(-2), storage: day(28), demurrage: day(8), win: "not_open", auto: true, stage: "pending", createdAt: now },
+  { id: "3", decl: "DIN-2026-004377", port: "Punta Arenas", entry: day(-5), storage: day(25), demurrage: day(0), win: "closed", auto: false, stage: "ready", createdAt: now },
+  { id: "4", decl: "DIN-2026-004120", port: "Iquique", entry: day(-6), storage: day(24), demurrage: day(4), win: "closed", auto: true, stage: "completed", createdAt: now },
 ];
 // Moving to the SIM stage with auto-trigger on records a (simulated) pickup notice.
 export function applyStage(r: Req, stage: Stage, at = Date.now()): Req {
@@ -48,4 +48,16 @@ export function storageFromEntry(entry: string): string {
   const d = new Date(entry.length === 10 ? entry + "T00:00" : entry); d.setDate(d.getDate() + STORAGE_FREE_DAYS);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// Shipping-line free days run from bonded-warehouse entry: 5 (standard) or 10 (special equipment), never 30.
+export const DEMURRAGE_MAX_DAYS = 10;
+export function demurrageFromEntry(entry: string, days: number): string {
+  const d = new Date(entry.length === 10 ? entry + "T00:00" : entry); d.setDate(d.getDate() + days);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+export function demurrageValid(entry: string, dem: string): boolean {
+  const e = deadlineTime(entry), d = deadlineTime(dem);
+  return d > e && d <= deadlineTime(demurrageFromEntry(entry, DEMURRAGE_MAX_DAYS)) && d < deadlineTime(storageFromEntry(entry));
 }
