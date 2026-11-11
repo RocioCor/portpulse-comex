@@ -84,7 +84,7 @@ function Stat({ label, value, tone = "bg-navy-foreground/10" }: { label: string;
 function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage" | "demurrage"; now: number }) {
   const { t, lang } = useI18n();
   const status = deadlineStatus(iso, now, kind === "demurrage" ? 24 : 48);
-  const fd = kind === "demurrage" ? freeDaysLeft(iso, now) : null;
+  const fd = freeDaysLeft(iso, now);
   const cls = status === "expired" ? "bg-danger text-navy-foreground" : status === "warning" ? "bg-warning text-foreground" : "bg-muted text-foreground";
   const label = status === "missing" ? t.deadlineMissing : status === "expired" ? t.deadlineExpired : status === "warning" ? (kind === "demurrage" ? t.soon24 : t.deadlineSoon) : t.deadlineOk;
   const date = iso ? new Date(iso.length === 10 ? iso + "T23:59:59" : iso).toLocaleString(lang === "es" ? "es-CL" : "en-GB", { day: "2-digit", month: "short", year: "numeric", ...(iso.length > 10 ? { hour: "2-digit", minute: "2-digit" } : {}) }) : "—";
@@ -92,7 +92,7 @@ function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage"
     <div className="font-semibold text-sm">{kind === "storage" ? t.storage : t.demurrage}</div>
     <div className="text-sm text-muted-foreground">{kind === "storage" ? t.collect : t.returnEmpty}</div>
     <div className="text-sm">{date}</div>
-    {fd !== null && <div className="text-sm font-bold">{fd} {t.freeLeft}</div>}
+    {fd !== null && <div className="text-sm font-bold">{fd} {kind === "storage" ? t.storageLeft : t.containerLeft}</div>}
     <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${cls}`}>{label}</span>
   </div>;
 }
