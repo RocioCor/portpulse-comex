@@ -49,8 +49,8 @@ function App() {
         <div className="mx-auto max-w-6xl px-4 pb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label={t.open} value={open.length} />
           <Stat label={t.released} value={open.filter((i) => turnReminder(i, now)).length} tone="bg-warning text-navy" />
-           <Stat label={t.storageAlert} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.storage, now))).length} tone="bg-warning text-navy" />
-           <Stat label={t.demurrageAlert24} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.demurrage, now, 24))).length} tone="bg-danger text-navy-foreground" />
+           <Stat label={"🟠 " + t.storageAlert} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.storage, now))).length} tone="bg-warning text-navy" />
+           <Stat label={"🔴 " + t.demurrageAlert24} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.demurrage, now, 24))).length} tone="bg-danger text-navy-foreground" />
         </div>
       </header>
 
@@ -107,12 +107,14 @@ function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: 
         <div><div className="font-mono font-medium text-lg">{r.decl}</div><div className="text-muted-foreground">{r.port}</div></div>
         <span className={`self-start px-3 py-1 rounded-full border-2 text-sm font-semibold ${stageCls[r.stage]}`}>{t.st[r.stage]}</span>
       </div>
-      <div className="mt-4 grid sm:grid-cols-2 gap-4">
+      {r.stage === "completed" ? <div className="mt-3 rounded-lg bg-muted p-3 text-sm font-semibold">✓ {t.archived}</div> : <div className="mt-4 grid sm:grid-cols-2 gap-4">
         <div>{r.entry && <div className="text-xs text-muted-foreground pl-3 mb-1">{t.entryLbl}: {new Date(r.entry.length === 10 ? r.entry + "T00:00" : r.entry).toLocaleDateString(lang === "es" ? "es-CL" : "en-GB")}</div>}<Deadline iso={r.storage} kind="storage" now={now} /></div>
         <Deadline iso={r.demurrage} kind="demurrage" now={now} />
-      </div>
+      </div>}
+      {r.stage === "pending" && <div className="mt-3 rounded-lg bg-muted p-3"><Button disabled className="h-12">⏳ {t.booked}</Button><div className="text-sm mt-1 text-muted-foreground">{t.waitRelease}</div></div>}
+      {r.stage === "ready" && <div className="mt-3 rounded-lg bg-success/20 p-3 text-sm font-semibold">🚚 {t.readyHint}</div>}
       {r.stage === "released" && <div className={`mt-3 rounded-lg p-3 ${tr ? "bg-warning" : "bg-success/20"}`}>
-        {tr ? <><div className="font-bold">🔔 {t.turnN}{tr.count}: {t.turnDue}</div><div className="text-sm">{t.turnNext} {tr.nextInMin} {t.min}</div>
+        {tr ? <><div className="font-bold">🔔 {t.turnN}{tr.count}: {t.turnDue}</div><div className="text-sm font-mono font-bold">⏱ {Math.floor(tr.nextInMin / 60)}h {tr.nextInMin % 60}m — {t.turnNext}</div>
           <Button className="mt-2 h-12" onClick={() => onPatch({ bookedAt: Date.now(), win: "open" })}>✓ {t.booked}</Button></>
         : <><div className="font-bold">✓ {t.bookedAt} {r.bookedAt && new Date(r.bookedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</div>
           <Button variant="outline" className="mt-2 h-12" onClick={() => onPatch({ bookedAt: undefined, releasedAt: Date.now(), win: "not_open" })}>↻ {t.rebook}</Button></>}
