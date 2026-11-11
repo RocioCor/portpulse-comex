@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
-    { title: "Port Release Desk — Customs & SIM pickup tracker" },
-    { name: "description", content: "Track customs releases, SIM pickup windows, terminal storage and empty-container return deadlines with 48-hour alerts. English / Español." },
+    { title: "Port Release Desk — Customs & terminal slot tracker" },
+    { name: "description", content: "Track customs releases, 2-hour terminal slots, terminal storage and empty-container return deadlines with 48-hour alerts. English / Español." },
     { property: "og:title", content: "Port Release Desk" },
     { property: "og:description", content: "Independent terminal storage and shipping-line deadlines with 48-hour alerts." },
     { property: "og:type", content: "website" },
@@ -113,12 +113,12 @@ function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: 
       </div>
       {r.stage === "released" && <div className={`mt-3 rounded-lg p-3 ${tr ? "bg-warning" : "bg-success/20"}`}>
         {tr ? <><div className="font-bold">🔔 {t.turnN}{tr.count}: {t.turnDue}</div><div className="text-sm">{t.turnNext} {tr.nextInMin} {t.min}</div>
-          <Button className="mt-2 h-12" onClick={() => onPatch({ bookedAt: Date.now() })}>✓ {t.booked}</Button></>
+          <Button className="mt-2 h-12" onClick={() => onPatch({ bookedAt: Date.now(), win: "open" })}>✓ {t.booked}</Button></>
         : <><div className="font-bold">✓ {t.bookedAt} {r.bookedAt && new Date(r.bookedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</div>
-          <Button variant="outline" className="mt-2 h-12" onClick={() => onPatch({ bookedAt: undefined, releasedAt: Date.now() })}>↻ {t.rebook}</Button></>}
+          <Button variant="outline" className="mt-2 h-12" onClick={() => onPatch({ bookedAt: undefined, releasedAt: Date.now(), win: "not_open" })}>↻ {t.rebook}</Button></>}
       </div>}
       <div className="mt-3 flex flex-wrap gap-2 items-center text-sm">
-        <span className="px-2 py-1 rounded bg-muted">{t.sim}: {t.w[r.win]}</span>
+        <span className={`px-2 py-1 rounded font-semibold ${r.win === "not_open" && r.stage !== "completed" ? "bg-danger text-navy-foreground" : "bg-muted"}`}>{t.sim}: {r.win === "not_open" ? "🔴" : "🟢"} {t.w[r.win]}</span>
         {r.stage === "sim_active" && <span className={`px-2 py-1 rounded font-bold ${mins > 0 ? "bg-warning" : "bg-danger text-navy-foreground animate-flash"}`}>⏱ {mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m ${t.left}` : t.windowClosed}</span>}
         <span className="px-2 py-1 rounded bg-muted">{r.auto ? t.autoOn : t.autoOff}</span>
         {r.notifiedAt && <span className="px-2 py-1 rounded bg-success/20">🔔 {t.notified} {new Date(r.notifiedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -158,7 +158,7 @@ function NewForm({ onAdd }: { onAdd: (r: Req) => void }) {
       <p className="border-l-2 border-warning pl-3 text-sm text-muted-foreground">{t.alertHint}</p>
       <label className="block font-medium">{t.sim}
         <select className={input + " mt-1"} value={f.win} onChange={(e) => setF({ ...f, win: e.target.value as Win })}>
-          {(["not_open", "open", "closed"] as Win[]).map((w) => <option key={w} value={w}>{t.w[w]}</option>)}
+          {(["not_open", "open"] as Win[]).map((w) => <option key={w} value={w}>{t.w[w]}</option>)}
         </select>
       </label>
       <label className="flex gap-3 items-start cursor-pointer">
