@@ -27,7 +27,7 @@ function useNow() { const [n, setN] = useState(Date.now()); useEffect(() => { co
 
 function App() {
   const { t, lang, setLang } = useI18n();
-  const { items, add, update, patch } = useRequests();
+  const { items, add, update, patch, remove } = useRequests();
   const now = useNow();
   const [filter, setFilter] = useState<Stage | "all">("all");
   const [q, setQ] = useState("");
@@ -68,7 +68,7 @@ function App() {
           </div>
           <div className="space-y-3">
             {list.length === 0 && <p className="text-muted-foreground py-8 text-center">{t.none}</p>}
-            {list.map((r) => <Card key={r.id} r={r} now={now} onStage={(s) => update(r.id, s)} onPatch={(p) => patch(r.id, p)} />)}
+            {list.map((r) => <Card key={r.id} r={r} now={now} onStage={(s) => update(r.id, s)} onPatch={(p) => patch(r.id, p)} onDelete={() => { if (confirm(`${t.delConfirm} ${r.decl}?`)) remove(r.id); }} />)}
           </div>
         </section>
       </main>
@@ -97,7 +97,7 @@ function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage"
   </div>;
 }
 
-function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: Stage) => void; onPatch: (p: Partial<Req>) => void }) {
+function Card({ r, now, onStage, onPatch, onDelete }: { r: Req; now: number; onStage: (s: Stage) => void; onPatch: (p: Partial<Req>) => void; onDelete: () => void }) {
   const tr = turnReminder(r, now);
   const { t, lang } = useI18n();
   const mins = r.simOpenedAt ? 120 - Math.floor((now - r.simOpenedAt) / 60000) : 0;
@@ -130,6 +130,7 @@ function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: 
           {STAGES.map((s) => <option key={s} value={s}>{t.st[s]}</option>)}
         </select>
       </label>
+      <Button variant="outline" className="mt-3 h-12 w-full border-danger text-danger" onClick={onDelete}>🗑 {t.del}</Button>
     </article>
   );
 }

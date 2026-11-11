@@ -23,6 +23,7 @@ export function useRequests() {
   useEffect(() => { const s = localStorage.getItem("reqs"); if (s) setItems(JSON.parse(s)); }, []);
   const save = (n: Req[]) => { setItems(n); localStorage.setItem("reqs", JSON.stringify(n)); };
   return { items, add: (r: Req) => save([r, ...items]), update: (id: string, stage: Stage) => save(items.map((i) => (i.id === id ? applyStage(i, stage) : i))),
+    remove: (id: string) => save(items.filter((i) => i.id !== id)),
     patch: (id: string, p: Partial<Req>) => save(items.map((i) => (i.id === id ? { ...i, ...p } : i))) };
 }
 // Legacy date-only deadlines remain valid through the end of their local calendar day.
