@@ -1,7 +1,7 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { I18nProvider, useI18n } from "@/lib/i18n";
-import { useRequests, deadlineStatus, applyStage, type Stage, type Win, type Req } from "@/lib/store";
+import { useRequests, deadlineStatus, applyStage, turnReminder, freeDaysLeft, type Stage, type Win, type Req } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -16,9 +16,9 @@ export const Route = createFileRoute("/")({
   component: () => <I18nProvider><ClientOnly><App /></ClientOnly></I18nProvider>,
 });
 
-const STAGES: Stage[] = ["pending", "sim_active", "ready", "completed"];
+const STAGES: Stage[] = ["pending", "released", "sim_active", "ready", "completed"];
 const stageCls: Record<Stage, string> = {
-  pending: "bg-warning/20 text-foreground border-warning", sim_active: "bg-warning text-foreground border-warning",
+  pending: "bg-warning/20 text-foreground border-warning", released: "bg-primary text-primary-foreground border-primary", sim_active: "bg-warning text-foreground border-warning",
   ready: "bg-success text-navy-foreground border-success", completed: "bg-muted text-muted-foreground border-border",
 };
 const input = "w-full h-14 rounded-lg border-2 border-input bg-card px-4 text-lg focus:border-primary outline-none";
@@ -27,7 +27,7 @@ function useNow() { const [n, setN] = useState(Date.now()); useEffect(() => { co
 
 function App() {
   const { t, lang, setLang } = useI18n();
-  const { items, add, update } = useRequests();
+  const { items, add, update, patch } = useRequests();
   const now = useNow();
   const [filter, setFilter] = useState<Stage | "all">("all");
   const [q, setQ] = useState("");
@@ -48,9 +48,9 @@ function App() {
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label={t.open} value={open.length} />
-          <Stat label={t.simActive} value={open.filter((i) => i.stage === "sim_active").length} tone="bg-warning text-navy" />
+          <Stat label={t.released} value={open.filter((i) => turnReminder(i, now)).length} tone="bg-warning text-navy" />
            <Stat label={t.storageAlert} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.storage, now))).length} tone="bg-warning text-navy" />
-           <Stat label={t.demurrageAlert} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.demurrage, now))).length} tone="bg-danger text-navy-foreground" />
+           <Stat label={t.demurrageAlert24} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.demurrage, now, 24))).length} tone="bg-danger text-navy-foreground" />
         </div>
       </header>
 
@@ -68,7 +68,7 @@ function App() {
           </div>
           <div className="space-y-3">
             {list.length === 0 && <p className="text-muted-foreground py-8 text-center">{t.none}</p>}
-            {list.map((r) => <Card key={r.id} r={r} now={now} onStage={(s) => update(r.id, s)} />)}
+            {list.map((r) => <Card key={r.id} r={r} now={now} onStage={(s) => update(r.id, s)} onPatch={(p) => patch(r.id, p)} />)}
           </div>
         </section>
       </main>
@@ -83,19 +83,22 @@ function Stat({ label, value, tone = "bg-navy-foreground/10" }: { label: string;
 
 function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage" | "demurrage"; now: number }) {
   const { t, lang } = useI18n();
-  const status = deadlineStatus(iso, now);
+  const status = deadlineStatus(iso, now, kind === "demurrage" ? 24 : 48);
+  const fd = kind === "demurrage" ? freeDaysLeft(iso, now) : null;
   const cls = status === "expired" ? "bg-danger text-navy-foreground" : status === "warning" ? "bg-warning text-foreground" : "bg-muted text-foreground";
-  const label = status === "missing" ? t.deadlineMissing : status === "expired" ? t.deadlineExpired : status === "warning" ? t.deadlineSoon : t.deadlineOk;
+  const label = status === "missing" ? t.deadlineMissing : status === "expired" ? t.deadlineExpired : status === "warning" ? (kind === "demurrage" ? t.soon24 : t.deadlineSoon) : t.deadlineOk;
   const date = iso ? new Date(iso.length === 10 ? iso + "T23:59:59" : iso).toLocaleString(lang === "es" ? "es-CL" : "en-GB", { day: "2-digit", month: "short", year: "numeric", ...(iso.length > 10 ? { hour: "2-digit", minute: "2-digit" } : {}) }) : "—";
   return <div className="min-w-0 border-l-2 border-border pl-3 space-y-1">
     <div className="font-semibold text-sm">{kind === "storage" ? t.storage : t.demurrage}</div>
     <div className="text-sm text-muted-foreground">{kind === "storage" ? t.collect : t.returnEmpty}</div>
     <div className="text-sm">{date}</div>
+    {fd !== null && <div className="text-sm font-bold">{fd} {t.freeLeft}</div>}
     <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${cls}`}>{label}</span>
   </div>;
 }
 
-function Card({ r, now, onStage }: { r: Req; now: number; onStage: (s: Stage) => void }) {
+function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: Stage) => void; onPatch: (p: Partial<Req>) => void }) {
+  const tr = turnReminder(r, now);
   const { t, lang } = useI18n();
   const mins = r.simOpenedAt ? 120 - Math.floor((now - r.simOpenedAt) / 60000) : 0;
   return (
@@ -108,6 +111,12 @@ function Card({ r, now, onStage }: { r: Req; now: number; onStage: (s: Stage) =>
         <Deadline iso={r.storage} kind="storage" now={now} />
         <Deadline iso={r.demurrage} kind="demurrage" now={now} />
       </div>
+      {r.stage === "released" && <div className={`mt-3 rounded-lg p-3 ${tr ? "bg-warning" : "bg-success/20"}`}>
+        {tr ? <><div className="font-bold">🔔 {t.turnN}{tr.count}: {t.turnDue}</div><div className="text-sm">{t.turnNext} {tr.nextInMin} {t.min}</div>
+          <Button className="mt-2 h-12" onClick={() => onPatch({ bookedAt: Date.now() })}>✓ {t.booked}</Button></>
+        : <><div className="font-bold">✓ {t.bookedAt} {r.bookedAt && new Date(r.bookedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</div>
+          <Button variant="outline" className="mt-2 h-12" onClick={() => onPatch({ bookedAt: undefined, releasedAt: Date.now() })}>↻ {t.rebook}</Button></>}
+      </div>}
       <div className="mt-3 flex flex-wrap gap-2 items-center text-sm">
         <span className="px-2 py-1 rounded bg-muted">{t.sim}: {t.w[r.win]}</span>
         {r.stage === "sim_active" && <span className={`px-2 py-1 rounded font-bold ${mins > 0 ? "bg-warning" : "bg-danger text-navy-foreground animate-flash"}`}>⏱ {mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m ${t.left}` : t.windowClosed}</span>}
