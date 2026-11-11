@@ -111,7 +111,7 @@ function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: 
         <div>{r.entry && <div className="text-xs text-muted-foreground pl-3 mb-1">{t.entryLbl}: {new Date(r.entry.length === 10 ? r.entry + "T00:00" : r.entry).toLocaleDateString(lang === "es" ? "es-CL" : "en-GB")}</div>}<Deadline iso={r.storage} kind="storage" now={now} /></div>
         <Deadline iso={r.demurrage} kind="demurrage" now={now} />
       </div>}
-      {r.stage === "pending" && <div className="mt-3 rounded-lg bg-muted p-3"><Button disabled className="h-12">⏳ {t.booked}</Button><div className="text-sm mt-1 text-muted-foreground">{t.waitRelease}</div></div>}
+      {r.stage === "pending" && <div className="mt-3 rounded-lg bg-muted p-3"><Button disabled className="h-12">⏳ {t.waitCustoms}</Button><div className="text-sm mt-1 text-muted-foreground">{t.waitRelease}</div></div>}
       {r.stage === "ready" && <div className="mt-3 rounded-lg bg-success/20 p-3 text-sm font-semibold">🚚 {t.readyHint}</div>}
       {r.stage === "released" && <div className={`mt-3 rounded-lg p-3 ${tr ? "bg-warning" : "bg-success/20"}`}>
         {tr ? <><div className="font-bold">🔔 {t.turnN}{tr.count}: {t.turnDue}</div><div className="text-sm font-mono font-bold">⏱ {Math.floor(tr.nextInMin / 60)}h {tr.nextInMin % 60}m — {t.turnNext}</div>
@@ -120,7 +120,7 @@ function Card({ r, now, onStage, onPatch }: { r: Req; now: number; onStage: (s: 
           <Button variant="outline" className="mt-2 h-12" onClick={() => onPatch({ bookedAt: undefined, releasedAt: Date.now(), win: "not_open" })}>↻ {t.rebook}</Button></>}
       </div>}
       <div className="mt-3 flex flex-wrap gap-2 items-center text-sm">
-        <span className={`px-2 py-1 rounded font-semibold ${r.win === "not_open" && r.stage !== "completed" ? "bg-danger text-navy-foreground" : "bg-muted"}`}>{t.sim}: {r.win === "not_open" ? "🔴" : "🟢"} {t.w[r.win]}</span>
+        <span className={`px-2 py-1 rounded font-semibold ${r.win === "not_open" && r.stage !== "completed" && r.stage !== "pending" ? "bg-danger text-navy-foreground" : "bg-muted"}`}>{t.sim}: {r.stage === "pending" ? `⏳ ${t.waitCustoms}` : <>{r.win === "not_open" ? "🔴" : "🟢"} {t.w[r.win]}</>}</span>
         {r.stage === "sim_active" && <span className={`px-2 py-1 rounded font-bold ${mins > 0 ? "bg-warning" : "bg-danger text-navy-foreground animate-flash"}`}>⏱ {mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m ${t.left}` : t.windowClosed}</span>}
         <span className="px-2 py-1 rounded bg-muted">{r.auto ? t.autoOn : t.autoOff}</span>
         {r.notifiedAt && <span className="px-2 py-1 rounded bg-success/20">🔔 {t.notified} {new Date(r.notifiedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</span>}

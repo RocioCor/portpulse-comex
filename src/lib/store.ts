@@ -14,7 +14,7 @@ const seed: Req[] = [
 export function applyStage(r: Req, stage: Stage, at = Date.now()): Req {
   const n = { ...r, stage };
   if (stage === "sim_active") { n.win = "open"; n.simOpenedAt = at; if (r.auto) n.notifiedAt = at; }
-  if (stage === "released") { n.releasedAt = at; n.bookedAt = undefined; }
+  if (stage === "released") { n.releasedAt = at; n.bookedAt = undefined; n.win = "not_open"; }
   if (stage === "ready" || stage === "completed") n.win = "closed";
   return n;
 }
