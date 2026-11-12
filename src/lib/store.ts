@@ -1,15 +1,6 @@
-import { useEffect, useState } from "react";
 export type Stage = "pending" | "released" | "sim_active" | "ready" | "completed";
 export type Win = "not_open" | "open" | "closed";
 export type Req = { id: string; decl: string; port: string; entry?: string; storage: string; demurrage?: string; win: Win; auto: boolean; stage: Stage; simOpenedAt?: number; notifiedAt?: number; releasedAt?: number; bookedAt?: number | undefined; createdAt: number };
-const day = (o: number) => { const d = new Date(); d.setDate(d.getDate() + o); return d.toISOString().slice(0, 10); };
-const now = Date.now();
-const seed: Req[] = [
-  { id: "1", decl: "DIN-2026-004581", port: "San Antonio", entry: day(-4), storage: day(26), demurrage: day(1), win: "open", auto: true, stage: "sim_active", simOpenedAt: now - 75 * 60000, notifiedAt: now - 75 * 60000, createdAt: now },
-  { id: "2", decl: "DIN-2026-004602", port: "Valparaíso", entry: day(-2), storage: day(28), demurrage: day(8), win: "not_open", auto: true, stage: "pending", createdAt: now },
-  { id: "3", decl: "DIN-2026-004377", port: "Punta Arenas", entry: day(-5), storage: day(25), demurrage: day(0), win: "closed", auto: false, stage: "ready", createdAt: now },
-  { id: "4", decl: "DIN-2026-004120", port: "Iquique", entry: day(-6), storage: day(24), demurrage: day(4), win: "closed", auto: true, stage: "completed", createdAt: now },
-];
 // Moving to the SIM stage with auto-trigger on records a (simulated) pickup notice.
 export function applyStage(r: Req, stage: Stage, at = Date.now()): Req {
   const n = { ...r, stage };
@@ -17,14 +8,6 @@ export function applyStage(r: Req, stage: Stage, at = Date.now()): Req {
   if (stage === "released") { n.releasedAt = at; n.bookedAt = undefined; n.win = "not_open"; }
   if (stage === "ready" || stage === "completed") n.win = "closed";
   return n;
-}
-export function useRequests() {
-  const [items, setItems] = useState<Req[]>(seed);
-  useEffect(() => { const s = localStorage.getItem("reqs"); if (s) setItems(JSON.parse(s)); }, []);
-  const save = (n: Req[]) => { setItems(n); localStorage.setItem("reqs", JSON.stringify(n)); };
-  return { items, add: (r: Req) => save([r, ...items]), update: (id: string, stage: Stage) => save(items.map((i) => (i.id === id ? applyStage(i, stage) : i))),
-    remove: (id: string) => save(items.filter((i) => i.id !== id)),
-    patch: (id: string, p: Partial<Req>) => save(items.map((i) => (i.id === id ? { ...i, ...p } : i))) };
 }
 // Legacy date-only deadlines remain valid through the end of their local calendar day.
 export function deadlineTime(iso: string): number {
@@ -62,3 +45,11 @@ export function demurrageValid(entry: string, dem: string): boolean {
   const e = deadlineTime(entry), d = deadlineTime(dem);
   return d > e && d <= deadlineTime(demurrageFromEntry(entry, DEMURRAGE_MAX_DAYS)) && d < deadlineTime(storageFromEntry(entry));
 }
+
+// History filter: an operation matches when its deadline's calendar day falls within the chosen range.
+export const inRange = (iso: string | undefined, from: string, to: string) => {
+  if (!from && !to) return true;
+  if (!iso) return false;
+  const d = iso.slice(0, 10);
+  return (!from || d >= from) && (!to || d <= to);
+};

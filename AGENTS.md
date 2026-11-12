@@ -32,3 +32,5 @@ use the editor.
 - Keep terminal storage and empty-container return as independent deadline fields; never derive a shipping-line deadline from storage or a presumed free-day allowance.
 - Centralize deadline evaluation in the browser-safe store helpers; preserve legacy date-only values as end-of-day deadlines so existing requests remain readable.
 - Render the browser-local request dashboard after hydration to avoid mismatches from dynamic demo timestamps and local timezone formatting.
+
+- Operations live in the Cloud `operations` table (shared by all signed-in team members); Google Sheets is a one-way mirror rewritten by `syncSheet` after each change, never read back — keeps one source of truth and stays within Sheets quotas.

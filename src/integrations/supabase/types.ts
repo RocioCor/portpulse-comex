@@ -14,7 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      operations: {
+        Row: {
+          auto: boolean
+          booked_at: number | null
+          created_at: string
+          created_by: string | null
+          decl: string
+          demurrage: string | null
+          entry: string | null
+          id: string
+          notified_at: number | null
+          port: string
+          released_at: number | null
+          sim_opened_at: number | null
+          stage: string
+          storage: string
+          updated_at: string
+          win: string
+        }
+        Insert: {
+          auto?: boolean
+          booked_at?: number | null
+          created_at?: string
+          created_by?: string | null
+          decl: string
+          demurrage?: string | null
+          entry?: string | null
+          id?: string
+          notified_at?: number | null
+          port: string
+          released_at?: number | null
+          sim_opened_at?: number | null
+          stage?: string
+          storage: string
+          updated_at?: string
+          win?: string
+        }
+        Update: {
+          auto?: boolean
+          booked_at?: number | null
+          created_at?: string
+          created_by?: string | null
+          decl?: string
+          demurrage?: string | null
+          entry?: string | null
+          id?: string
+          notified_at?: number | null
+          port?: string
+          released_at?: number | null
+          sim_opened_at?: number | null
+          stage?: string
+          storage?: string
+          updated_at?: string
+          win?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,8 +1,12 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { I18nProvider, useI18n } from "@/lib/i18n";
-import { useRequests, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storageFromEntry, demurrageFromEntry, demurrageValid, DEMURRAGE_MAX_DAYS, type Stage, type Win, type Req } from "@/lib/store";
+import { inRange, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storageFromEntry, demurrageFromEntry, demurrageValid, DEMURRAGE_MAX_DAYS, type Stage, type Win, type Req } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { useOperations } from "@/lib/operations";
+import { Login } from "@/components/Login";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
@@ -13,7 +17,7 @@ export const Route = createFileRoute("/")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
-  component: () => <I18nProvider><ClientOnly><App /></ClientOnly></I18nProvider>,
+  component: () => <I18nProvider><ClientOnly><Gate /></ClientOnly></I18nProvider>,
 });
 
 const STAGES: Stage[] = ["pending", "released", "sim_active", "ready", "completed"];
@@ -25,15 +29,30 @@ const input = "w-full h-14 rounded-lg border-2 border-input bg-card px-4 text-lg
 
 function useNow() { const [n, setN] = useState(Date.now()); useEffect(() => { const i = setInterval(() => setN(Date.now()), 30000); return () => clearInterval(i); }, []); return n; }
 
-function App() {
+function Gate() {
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
+  if (session === undefined) return <div className="min-h-screen bg-navy" />;
+  return session ? <App email={session.user.email ?? ""} /> : <Login />;
+}
+
+function App({ email }: { email: string }) {
   const { t, lang, setLang } = useI18n();
-  const { items, add, update, patch, remove } = useRequests();
+  const { items, add, update, patch, remove, sheet, syncNow, loading } = useOperations();
+  const [port, setPort] = useState("all");
+  const [sf, setSf] = useState(""); const [st, setSt] = useState("");
+  const [df, setDf] = useState(""); const [dt, setDt] = useState("");
+  const ports = [...new Set(items.map((i) => i.port))].sort();
   const now = useNow();
   const [filter, setFilter] = useState<Stage | "all">("all");
   const [q, setQ] = useState("");
   const [toast, setToast] = useState("");
   const open = items.filter((i) => i.stage !== "completed");
-  const list = items.filter((i) => (filter === "all" || i.stage === filter) && (i.decl + i.port).toLowerCase().includes(q.toLowerCase()));
+  const list = items.filter((i) => (filter === "all" || i.stage === filter) && (i.decl + i.port).toLowerCase().includes(q.toLowerCase()) && (port === "all" || i.port === port) && inRange(i.storage, sf, st) && inRange(i.demurrage, df, dt));
 
   return (
     <div className="min-h-screen">
@@ -45,6 +64,7 @@ function App() {
               <Button key={l} onClick={() => setLang(l)} className={`rounded-none px-4 py-2 font-semibold ${lang === l ? "bg-navy-foreground text-navy" : "bg-transparent text-navy-foreground"}`}>{l === "es" ? "Español" : "English"}</Button>
             ))}
           </div>
+          <div className="flex items-center gap-3 text-sm"><span className="opacity-75">{email}</span><Button variant="outline" className="bg-transparent text-navy-foreground border-navy-foreground/40" onClick={() => supabase.auth.signOut()}>Salir</Button></div>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label={t.open} value={open.length} />
@@ -55,7 +75,14 @@ function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 grid lg:grid-cols-[380px_1fr] gap-8">
-        <div className="space-y-8 min-w-0"><NewForm onAdd={(r) => { add(r); setToast(`${r.decl} ${t.savedMsg}`); setTimeout(() => setToast(""), 4000); }} /><WhatsApp items={open} now={now} /></div>
+        <div className="space-y-8 min-w-0"><NewForm onAdd={(r) => { add(r); setToast(`${r.decl} ${t.savedMsg}`); setTimeout(() => setToast(""), 4000); }} /><WhatsApp items={open} now={now} />
+          <section className="space-y-2 rounded-lg border-2 border-border p-4">
+            <h2 className="text-xl font-bold">📊 Google Sheets</h2>
+            <p className="text-sm text-muted-foreground">Cada cambio se copia automáticamente a tu hoja de historial.</p>
+            <p className="text-sm font-semibold">{sheet.status === "syncing" ? "⏳ Actualizando hoja…" : sheet.status === "ok" ? "✓ Hoja actualizada" : sheet.status === "error" ? "⚠️ No se pudo actualizar la hoja" : sheet.url ? "Hoja conectada" : "Aún no se crea la hoja"}</p>
+            {sheet.url && <a className="block text-primary underline font-semibold" href={sheet.url} target="_blank" rel="noreferrer">Abrir hoja de cálculo ↗</a>}
+            <Button variant="outline" className="h-12 w-full" onClick={syncNow}>{sheet.url ? "Actualizar ahora" : "Crear hoja y copiar operaciones"}</Button>
+          </section></div>
         <section>
           <h2 className="text-xl font-bold mb-3">{t.reqs}</h2>
           <input className={input + " mb-3"} placeholder={t.search} value={q} onChange={(e) => setQ(e.target.value)} />
@@ -66,8 +93,20 @@ function App() {
               </Button>
             ))}
           </div>
+          <div className="grid sm:grid-cols-2 gap-3 mb-4 rounded-lg bg-muted p-3">
+            <label className="block text-sm font-medium sm:col-span-2">{t.port}
+              <select className={input + " mt-1 h-12 text-base"} value={port} onChange={(e) => setPort(e.target.value)}>
+                <option value="all">{t.all}</option>{ports.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select></label>
+            <fieldset className="text-sm"><legend className="font-medium">{t.storage}</legend>
+              <div className="flex gap-2 mt-1"><input aria-label="desde" type="date" className={input + " h-12 text-base"} value={sf} onChange={(e) => setSf(e.target.value)} /><input aria-label="hasta" type="date" className={input + " h-12 text-base"} value={st} onChange={(e) => setSt(e.target.value)} /></div></fieldset>
+            <fieldset className="text-sm"><legend className="font-medium">{t.demurrage}</legend>
+              <div className="flex gap-2 mt-1"><input aria-label="desde" type="date" className={input + " h-12 text-base"} value={df} onChange={(e) => setDf(e.target.value)} /><input aria-label="hasta" type="date" className={input + " h-12 text-base"} value={dt} onChange={(e) => setDt(e.target.value)} /></div></fieldset>
+            {(port !== "all" || sf || st || df || dt) && <Button variant="outline" className="sm:col-span-2" onClick={() => { setPort("all"); setSf(""); setSt(""); setDf(""); setDt(""); }}>✕ Limpiar filtros</Button>}
+          </div>
           <div className="space-y-3">
-            {list.length === 0 && <p className="text-muted-foreground py-8 text-center">{t.none}</p>}
+            {loading && <p className="text-muted-foreground py-8 text-center">…</p>}
+            {!loading && list.length === 0 && <p className="text-muted-foreground py-8 text-center">{t.none}</p>}
             {list.map((r) => <Card key={r.id} r={r} now={now} onStage={(s) => update(r.id, s)} onPatch={(p) => patch(r.id, p)} onDelete={() => { if (confirm(`${t.delConfirm} ${r.decl}?`)) remove(r.id); }} />)}
           </div>
         </section>
