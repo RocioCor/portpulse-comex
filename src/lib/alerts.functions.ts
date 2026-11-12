@@ -6,6 +6,6 @@ export const sendTestEmail = createServerFn({ method: "POST" })
   .inputValidator((d: { to: string }) => { if (!/^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(d.to)) throw new Error("Correo no válido"); return d; })
   .handler(async ({ data }) => {
     const { sendGmail } = await import("./gmail.server");
-    await sendGmail(data.to, "Prueba – Mesa de Liberación Portuaria", "¡Funciona! Aquí te llegarán los avisos de almacenaje (48 h), naviera (24 h) y turno terminal (cada 2 h).");
+    await sendGmail(data.to, "Prueba – PortPulse", "¡Funciona! Aquí te llegarán los avisos de almacenaje (48 h), naviera (24 h) y turno terminal (cada 2 h).");
     return { ok: true };
   });

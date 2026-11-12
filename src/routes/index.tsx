@@ -13,9 +13,9 @@ import type { Session } from "@supabase/supabase-js";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
-    { title: "Port Release Desk — Customs & terminal slot tracker" },
+    { title: "PortPulse — Customs & terminal slot tracker" },
     { name: "description", content: "Track customs releases, 2-hour terminal slots, terminal storage and empty-container return deadlines with 48-hour alerts. English / Español." },
-    { property: "og:title", content: "Port Release Desk" },
+    { property: "og:title", content: "PortPulse" },
     { property: "og:description", content: "Independent terminal storage and shipping-line deadlines with 48-hour alerts." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },

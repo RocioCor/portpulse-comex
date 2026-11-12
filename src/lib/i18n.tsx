@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 export type Lang = "en" | "es";
 const dict = {
   en: {
-    app: "Port Release Desk", tagline: "Customs releases, 2-hour terminal slots and storage deadlines in one place.",
+    app: "PortPulse", tagline: "Customs releases, 2-hour terminal slots and storage deadlines in one place.",
     open: "Open requests", simActive: "Terminal slot in progress", dueToday: "Storage expires today", expiring: "Expiring ≤ 2 days",
     newReq: "New request", decl: "Declaration number", port: "Port / Customs office", storage: "Terminal storage deadline",
     storageHint: "Last date and time to collect cargo from the port or bonded warehouse without storage charges.",
@@ -20,7 +20,7 @@ const dict = {
     w: { not_open: "Request urgently", open: "Requested", closed: "Slot finished" },
   },
   es: {
-    app: "Mesa de Liberación Portuaria", tagline: "Liberaciones aduaneras, turnos de terminal de 2 horas y plazos de almacenaje en un solo lugar.",
+    app: "PortPulse", tagline: "Liberaciones aduaneras, turnos de terminal de 2 horas y plazos de almacenaje en un solo lugar.",
     open: "Solicitudes abiertas", simActive: "Turno terminal en curso", dueToday: "Almacenaje vence hoy", expiring: "Vence en ≤ 2 días",
     newReq: "Nueva solicitud", decl: "Número de declaración", port: "Puerto / Aduana", storage: "Vencimiento de almacenaje en terminal",
     storageHint: "Fecha y hora límite para retirar la carga del puerto o depósito fiscal sin cobro de estadías por espacio.",

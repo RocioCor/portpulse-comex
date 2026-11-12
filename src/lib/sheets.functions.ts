@@ -23,7 +23,7 @@ export const syncSheet = createServerFn({ method: "POST" })
     const { data: setting } = await sb.from("app_settings").select("value").eq("key", "sheet_id").maybeSingle();
     let id = setting?.value;
     if (!id) {
-      const created = await gw("/spreadsheets", { method: "POST", body: JSON.stringify({ properties: { title: "Mesa de Liberación Portuaria – Historial" }, sheets: [{ properties: { title: TAB } }] }) });
+      const created = await gw("/spreadsheets", { method: "POST", body: JSON.stringify({ properties: { title: "PortPulse – Historial" }, sheets: [{ properties: { title: TAB } }] }) });
       id = created.spreadsheetId as string;
       const { error } = await sb.from("app_settings").upsert({ key: "sheet_id", value: id });
       if (error) throw new Error(error.message);

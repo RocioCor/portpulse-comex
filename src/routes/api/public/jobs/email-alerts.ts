@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/public/jobs/email-alerts")({
     if (!fresh.length) return Response.json({ sent: 0 });
     const { sendGmail } = await import("@/lib/gmail.server");
     const body = fresh.map((a) => `• ${a.decl} (${a.port})\n  ${a.title}\n  ${a.detail}`).join("\n\n");
-    await sendGmail(cfg["alert_email"], `⚠️ ${fresh.length} aviso(s) de vencimiento – Mesa de Liberación Portuaria`, body);
+    await sendGmail(cfg["alert_email"], `⚠️ ${fresh.length} aviso(s) de vencimiento – PortPulse`, body);
     await sb.from("email_alerts_sent").insert(fresh.map((a) => ({ key: a.key })));
     return Response.json({ sent: fresh.length });
   } } },
