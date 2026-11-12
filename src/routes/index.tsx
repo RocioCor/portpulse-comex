@@ -3,6 +3,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { I18nProvider, useI18n } from "@/lib/i18n";
 import { inRange, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storageFromEntry, demurrageFromEntry, demurrageValid, DEMURRAGE_MAX_DAYS, type Stage, type Win, type Req } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import portHeader from "@/assets/port-header.jpg";
 import { useOperations } from "@/lib/operations";
 import { Login } from "@/components/Login";
 import { EmailAlerts } from "@/components/EmailAlerts";
@@ -52,12 +54,17 @@ function App({ email }: { email: string }) {
   const [filter, setFilter] = useState<Stage | "all">("all");
   const [q, setQ] = useState("");
   const [toast, setToast] = useState("");
+  const [tab, setTab] = useState<"ops" | "cfg">("ops");
+  const [formOpen, setFormOpen] = useState(false);
   const open = items.filter((i) => i.stage !== "completed");
   const list = items.filter((i) => (filter === "all" || i.stage === filter) && (i.decl + i.port).toLowerCase().includes(q.toLowerCase()) && (port === "all" || i.port === port) && inRange(i.storage, sf, st) && inRange(i.demurrage, df, dt));
 
   return (
     <div className="min-h-screen">
-      <header className="bg-navy text-navy-foreground">
+      <header className="relative bg-navy text-navy-foreground overflow-hidden">
+        <img src={portHeader} alt="" aria-hidden width={1920} height={640} className="absolute inset-0 h-full w-full object-cover opacity-45" />
+        <div className="absolute inset-0 bg-gradient-to-b from-navy/70 via-navy/60 to-navy" />
+        <div className="relative">
         <div className="mx-auto max-w-6xl px-4 py-6 flex flex-wrap items-center justify-between gap-4">
           <div><h1 className="text-2xl font-bold tracking-tight">⚓ {t.app}</h1><p className="opacity-75">{t.tagline}</p></div>
           <div className="flex rounded-lg border border-navy-foreground/30 overflow-hidden" role="group" aria-label="Language">
@@ -73,17 +80,31 @@ function App({ email }: { email: string }) {
            <Stat label={"🟠 " + t.storageAlert} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.storage, now))).length} tone="bg-warning text-navy" />
            <Stat label={"🔴 " + t.demurrageAlert24} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.demurrage, now, 24))).length} tone="bg-danger text-navy-foreground" />
         </div>
+        <div className="mx-auto max-w-6xl px-4 pb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex rounded-full bg-navy-foreground/10 p-1 backdrop-blur" role="tablist">
+            {([["ops", "📋 Operaciones"], ["cfg", "⚙️ Configuración y Alertas"]] as const).map(([k, l]) => (
+              <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${tab === k ? "bg-navy-foreground text-navy" : "text-navy-foreground"}`}>{l}</button>
+            ))}
+          </div>
+          <Button onClick={() => setFormOpen(true)} className="h-12 rounded-full px-6 text-base font-bold bg-success text-navy-foreground shadow-lg">+ Nueva operación</Button>
+        </div>
+        </div>
       </header>
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>+ Nueva operación</DialogTitle></DialogHeader>
+          <NewForm onAdd={(r) => { add(r); setFormOpen(false); setTab("ops"); setToast(`${r.decl} ${t.savedMsg}`); setTimeout(() => setToast(""), 4000); }} />
+        </DialogContent>
+      </Dialog>
 
-      <main className="mx-auto max-w-6xl px-4 py-8 grid lg:grid-cols-[380px_1fr] gap-8">
-        <div className="space-y-8 min-w-0"><NewForm onAdd={(r) => { add(r); setToast(`${r.decl} ${t.savedMsg}`); setTimeout(() => setToast(""), 4000); }} /><WhatsApp items={open} now={now} /><EmailAlerts />
+      {tab === "cfg" ? <main className="mx-auto max-w-6xl px-4 py-8 grid md:grid-cols-2 gap-6 items-start"><WhatsApp items={open} now={now} /><EmailAlerts />
           <section className="space-y-2 rounded-lg border-2 border-border p-4">
             <h2 className="text-xl font-bold">📊 Google Sheets</h2>
             <p className="text-sm text-muted-foreground">Cada cambio se copia automáticamente a tu hoja de historial.</p>
             <p className="text-sm font-semibold">{sheet.status === "syncing" ? "⏳ Actualizando hoja…" : sheet.status === "ok" ? "✓ Hoja actualizada" : sheet.status === "error" ? "⚠️ No se pudo actualizar la hoja" : sheet.url ? "Hoja conectada" : "Aún no se crea la hoja"}</p>
             {sheet.url && <a className="block text-primary underline font-semibold" href={sheet.url} target="_blank" rel="noreferrer">Abrir hoja de cálculo ↗</a>}
             <Button variant="outline" className="h-12 w-full" onClick={syncNow}>{sheet.url ? "Actualizar ahora" : "Crear hoja y copiar operaciones"}</Button>
-          </section></div>
+          </section></main> : <main className="mx-auto max-w-6xl px-4 py-8">
         <section>
           <h2 className="text-xl font-bold mb-3">{t.reqs}</h2>
           <input className={input + " mb-3"} placeholder={t.search} value={q} onChange={(e) => setQ(e.target.value)} />
@@ -111,7 +132,7 @@ function App({ email }: { email: string }) {
             {list.map((r) => <Card key={r.id} r={r} now={now} onStage={(s) => update(r.id, s)} onPatch={(p) => patch(r.id, p)} onDelete={() => { if (confirm(`${t.delConfirm} ${r.decl}?`)) remove(r.id); }} />)}
           </div>
         </section>
-      </main>
+      </main>}
       {toast && <div role="status" className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-success text-navy-foreground px-6 py-4 rounded-lg shadow-lg font-semibold">✓ {t.saved}: {toast}</div>}
     </div>
   );
