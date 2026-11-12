@@ -5,6 +5,7 @@ import { inRange, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storag
 import { Button } from "@/components/ui/button";
 import { useOperations } from "@/lib/operations";
 import { Login } from "@/components/Login";
+import { EmailAlerts } from "@/components/EmailAlerts";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
@@ -75,7 +76,7 @@ function App({ email }: { email: string }) {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 grid lg:grid-cols-[380px_1fr] gap-8">
-        <div className="space-y-8 min-w-0"><NewForm onAdd={(r) => { add(r); setToast(`${r.decl} ${t.savedMsg}`); setTimeout(() => setToast(""), 4000); }} /><WhatsApp items={open} now={now} />
+        <div className="space-y-8 min-w-0"><NewForm onAdd={(r) => { add(r); setToast(`${r.decl} ${t.savedMsg}`); setTimeout(() => setToast(""), 4000); }} /><WhatsApp items={open} now={now} /><EmailAlerts />
           <section className="space-y-2 rounded-lg border-2 border-border p-4">
             <h2 className="text-xl font-bold">📊 Google Sheets</h2>
             <p className="text-sm text-muted-foreground">Cada cambio se copia automáticamente a tu hoja de historial.</p>

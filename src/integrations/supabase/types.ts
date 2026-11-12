@@ -32,6 +32,21 @@ export type Database = {
         }
         Relationships: []
       }
+      email_alerts_sent: {
+        Row: {
+          key: string
+          sent_at: string
+        }
+        Insert: {
+          key: string
+          sent_at?: string
+        }
+        Update: {
+          key?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       operations: {
         Row: {
           auto: boolean

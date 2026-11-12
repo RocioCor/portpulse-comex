@@ -34,3 +34,4 @@ use the editor.
 - Render the browser-local request dashboard after hydration to avoid mismatches from dynamic demo timestamps and local timezone formatting.
 
 - Operations live in the Cloud `operations` table (shared by all signed-in team members); Google Sheets is a one-way mirror rewritten by `syncSheet` after each change, never read back — keeps one source of truth and stays within Sheets quotas.
+- Email deadline alerts are sent from the linked Gmail by a 15-minute scheduled route; each alert has a stable key recorded in `email_alerts_sent` so it is emailed once (turn reminders once per 2 h cycle).

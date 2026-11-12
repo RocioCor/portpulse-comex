@@ -8,6 +8,13 @@
       "when": 1794501992349,
       "tag": "0000_operations_and_sheet_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794502900759,
+      "tag": "0001_email_alerts_sent",
+      "breakpoints": true
     }
   ]
 }

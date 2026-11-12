@@ -10,33 +10,44 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicJobsEmailAlertsRouteImport } from './routes/api/public/jobs/email-alerts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicJobsEmailAlertsRoute =
+  ApiPublicJobsEmailAlertsRouteImport.update({
+    id: '/api/public/jobs/email-alerts',
+    path: '/api/public/jobs/email-alerts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/jobs/email-alerts': typeof ApiPublicJobsEmailAlertsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/jobs/email-alerts': typeof ApiPublicJobsEmailAlertsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/jobs/email-alerts': typeof ApiPublicJobsEmailAlertsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/public/jobs/email-alerts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/jobs/email-alerts'
+  id: '__root__' | '/' | '/api/public/jobs/email-alerts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicJobsEmailAlertsRoute: typeof ApiPublicJobsEmailAlertsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +59,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/jobs/email-alerts': {
+      id: '/api/public/jobs/email-alerts'
+      path: '/api/public/jobs/email-alerts'
+      fullPath: '/api/public/jobs/email-alerts'
+      preLoaderRoute: typeof ApiPublicJobsEmailAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicJobsEmailAlertsRoute: ApiPublicJobsEmailAlertsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
