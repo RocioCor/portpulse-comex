@@ -3,3 +3,5 @@
 - [x] Revisar las tarjetas y el formulario en escritorio y móvil.
 - [x] Mantener el selector de idioma estable al cambiar a inglés.
 - [x] Usar Despacho n.º y las etiquetas operativas actuales en Google Sheets.
+- [x] Guardar nombres de destinatarios Gmail, mostrar sus nombres y conservar los correos para el envío.
+- [x] Verificar que los nombres persistan y que se puedan cambiar o quitar.
