@@ -58,7 +58,11 @@ function App({ email }: { email: string }) {
   const [tab, setTab] = useState<"ops" | "cfg">("ops");
   const [formOpen, setFormOpen] = useState(false);
   const open = items.filter((i) => i.stage !== "completed");
-  const list = items.filter((i) => (filter === "all" || i.stage === filter) && (i.decl + i.port).toLowerCase().includes(q.toLowerCase()) && (port === "all" || i.port === port) && inRange(i.storage, sf, st) && inRange(i.demurrage, df, dt));
+  const [kpi, setKpi] = useState<"" | "open" | "turn" | "storage" | "dem">("");
+  const kpiOk = (i: Req) => kpi === "" ? true : i.stage !== "completed" && (kpi === "open" || (kpi === "turn" ? !!turnReminder(i, now) : kpi === "storage" ? ["warning", "expired"].includes(deadlineStatus(i.storage, now)) : kpi === "dem" ? ["warning", "expired"].includes(deadlineStatus(i.demurrage, now, 24)) : true));
+  const pickKpi = (k: typeof kpi) => { setKpi(kpi === k ? "" : k); setTab("ops"); setTimeout(() => document.getElementById("ops-list")?.scrollIntoView({ behavior: "smooth" }), 50); };
+  const kpiLabel = { "": "", open: lang === "es" ? "Cargas activas" : "Active loads", turn: t.released, storage: t.storageAlert, dem: t.demurrageAlert24 }[kpi];
+  const list = items.filter((i) => kpiOk(i) && (filter === "all" || i.stage === filter) && (i.decl + i.port).toLowerCase().includes(q.toLowerCase()) && (port === "all" || i.port === port) && inRange(i.storage, sf, st) && inRange(i.demurrage, df, dt));
 
   return (
     <div className="min-h-screen">
@@ -76,10 +80,10 @@ function App({ email }: { email: string }) {
           <div className="flex items-center gap-3 text-sm"><span className="opacity-75">{email}</span><Button variant="outline" className="bg-transparent text-navy-foreground border-navy-foreground/40" onClick={() => supabase.auth.signOut()}>Salir</Button></div>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat label={lang === "es" ? "Cargas activas" : "Active loads"} value={open.length} />
-          <Stat label={t.released} value={open.filter((i) => turnReminder(i, now)).length} tone="bg-primary/25 border-primary/50" />
-           <Stat label={"🟠 " + t.storageAlert} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.storage, now))).length} tone="bg-warning/25 border-warning/50" />
-           <Stat label={"🔴 " + t.demurrageAlert24} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.demurrage, now, 24))).length} tone="bg-danger/25 border-danger/50" />
+          <Stat active={kpi === "open"} onClick={() => pickKpi("open")} label={lang === "es" ? "Cargas activas" : "Active loads"} value={open.length} />
+          <Stat active={kpi === "turn"} onClick={() => pickKpi("turn")} label={t.released} value={open.filter((i) => turnReminder(i, now)).length} tone="bg-primary/25 border-primary/50" />
+           <Stat active={kpi === "storage"} onClick={() => pickKpi("storage")} label={"🟠 " + t.storageAlert} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.storage, now))).length} tone="bg-warning/25 border-warning/50" />
+           <Stat active={kpi === "dem"} onClick={() => pickKpi("dem")} label={"🔴 " + t.demurrageAlert24} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.demurrage, now, 24))).length} tone="bg-danger/25 border-danger/50" />
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex rounded-full bg-navy-foreground/10 p-1 backdrop-blur" role="tablist">
@@ -109,8 +113,9 @@ function App({ email }: { email: string }) {
             {sheet.url && <a className="block text-primary underline font-semibold" href={sheet.url} target="_blank" rel="noreferrer">Abrir hoja de cálculo ↗</a>}
             <Button variant="outline" className="h-12 w-full" onClick={syncNow}>{sheet.url ? "Actualizar ahora" : "Crear hoja y copiar operaciones"}</Button>
           </section></main> : <main className="mx-auto max-w-6xl px-4 py-8">
-        <section>
+        <section id="ops-list" className="scroll-mt-4">
           <h2 className="text-xl font-bold mb-3">{t.reqs}</h2>
+          {kpi && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 p-3 text-sm font-semibold">{lang === "es" ? "Mostrando" : "Showing"}: {kpiLabel} ({list.length})<Button variant="outline" size="sm" className="ml-auto" onClick={() => setKpi("")}>✕ {lang === "es" ? "Mostrar todas" : "Show all"}</Button></div>}
           <input className={input + " mb-3"} placeholder={t.search} value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="flex flex-wrap gap-2 mb-4">
             {(["all", ...STAGES] as const).map((s) => (
@@ -142,8 +147,8 @@ function App({ email }: { email: string }) {
   );
 }
 
-function Stat({ label, value, tone = "bg-navy-foreground/10 border-navy-foreground/20" }: { label: string; value: number; tone?: string }) {
-  return <div className={`rounded-2xl border p-4 backdrop-blur-md shadow-lg text-navy-foreground ${tone}`}><div className="text-3xl font-bold font-mono">{value}</div><div className="text-sm">{label}</div></div>;
+function Stat({ label, value, tone = "bg-navy-foreground/10 border-navy-foreground/20", onClick, active }: { label: string; value: number; tone?: string; onClick?: () => void; active?: boolean }) {
+  return <button type="button" onClick={onClick} aria-pressed={active} className={`text-left rounded-2xl border p-4 backdrop-blur-md shadow-lg text-navy-foreground transition hover:scale-[1.02] ${active ? "ring-2 ring-navy-foreground" : ""} ${tone}`}><div className="text-3xl font-bold font-mono">{value}</div><div className="text-sm">{label}</div></button>;
 }
 
 function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage" | "demurrage"; now: number }) {
@@ -176,20 +181,18 @@ function Card({ r, now, onStage, onPatch, onDelete }: { r: Req; now: number; onS
         <div>{r.entry && <div className="text-xs text-muted-foreground pl-3 mb-1">{t.entryLbl}: {new Date(r.entry.length === 10 ? r.entry + "T00:00" : r.entry).toLocaleDateString(lang === "es" ? "es-CL" : "en-GB")}</div>}<Deadline iso={r.storage} kind="storage" now={now} /></div>
         <Deadline iso={r.demurrage} kind="demurrage" now={now} />
       </div>}
-      {r.stage === "pending" && <div className="mt-3 rounded-lg bg-muted p-3"><Button disabled className="h-12">⏳ {t.waitCustoms}</Button><div className="text-sm mt-1 text-muted-foreground">{t.waitRelease}</div></div>}
+      {r.stage === "pending" && <div className="mt-4 rounded-xl border border-border bg-muted/40 p-3 text-sm"><span className="font-semibold">⏳ {t.waitCustoms}</span></div>}
       {r.stage === "ready" && <div className="mt-3 rounded-lg bg-success/20 p-3 text-sm font-semibold">🚚 {t.readyHint}</div>}
-      {r.stage === "released" && <div className={`mt-3 rounded-xl border p-3 backdrop-blur-sm ${tr ? "bg-warning/20 border-warning/50" : "bg-success/15 border-success/40"}`}>
-        {tr ? <><div className="font-bold">🔔 {t.turnN}{tr.count}: {t.turnDue}</div><div className="text-sm font-mono font-bold">⏱ {Math.floor(tr.nextInMin / 60)}h {tr.nextInMin % 60}m — {t.turnNext}</div>
-          <Button className="mt-2 h-12" onClick={() => onPatch({ bookedAt: Date.now(), win: "open" })}>✓ {t.booked}</Button></>
-        : <><div className="font-bold">✓ {t.bookedAt} {r.bookedAt && new Date(r.bookedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</div>
-          <Button variant="outline" className="mt-2 h-12" onClick={() => onPatch({ bookedAt: undefined, releasedAt: Date.now(), win: "not_open" })}>↻ {t.rebook}</Button></>}
+      {r.stage === "released" && <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/40 p-3">
+        {tr ? <>
+          <div className="flex-1 min-w-[12rem]"><div className="font-semibold text-danger">🔴 {t.w.not_open}: {t.turnDue}</div><div className="text-xs text-muted-foreground">{t.turnNext} {Math.floor(tr.nextInMin / 60)}h {tr.nextInMin % 60}m · {t.turnN}{tr.count}</div></div>
+          <Button className="h-11" onClick={() => onPatch({ bookedAt: Date.now(), win: "open" })}>{lang === "es" ? "Ya pedí el turno" : "Slot booked"}</Button>
+        </> : <>
+          <div className="flex-1 min-w-[12rem] font-semibold text-success">🟢 {t.bookedAt} {r.bookedAt && new Date(r.bookedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</div>
+          <Button variant="ghost" className="h-11 text-muted-foreground" onClick={() => onPatch({ bookedAt: undefined, releasedAt: Date.now(), win: "not_open" })}>↻ {t.rebook}</Button>
+        </>}
       </div>}
-      <div className="mt-3 flex flex-wrap gap-2 items-center text-sm">
-        <span className={`px-2 py-1 rounded font-semibold ${r.win === "not_open" && r.stage !== "completed" && r.stage !== "pending" ? "bg-danger/15 text-danger border border-danger/40" : "bg-muted/60"}`}>{t.sim}: {r.stage === "pending" ? `⏳ ${t.waitCustoms}` : <>{r.win === "not_open" ? "🔴" : "🟢"} {t.w[r.win]}</>}</span>
-        {r.stage === "sim_active" && <span className={`px-2 py-1 rounded font-bold ${mins > 0 ? "bg-warning" : "bg-danger text-navy-foreground animate-flash"}`}>⏱ {mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m ${t.left}` : t.windowClosed}</span>}
-        <span className="px-2 py-1 rounded bg-muted">{r.auto ? t.autoOn : t.autoOff}</span>
-        {r.notifiedAt && <span className="px-2 py-1 rounded bg-success/20">🔔 {t.notified} {new Date(r.notifiedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</span>}
-      </div>
+      {r.stage === "sim_active" && <div className={`mt-3 inline-block px-2 py-1 rounded text-sm font-bold ${mins > 0 ? "bg-warning/25" : "bg-danger/20 text-danger animate-flash"}`}>⏱ {mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m ${t.left}` : t.windowClosed}</div>}
       <label className="mt-3 block text-sm font-medium">{t.status}
         <select className={input + " mt-1 h-12 text-base"} value={r.stage} onChange={(e) => onStage(e.target.value as Stage)}>
           {STAGES.map((s) => <option key={s} value={s}>{t.st[s]}</option>)}
