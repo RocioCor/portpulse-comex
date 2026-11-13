@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { applyStage, type Req, type Stage, type Win } from "./store";
+import { applyStage, storageFromEntry, demurrageFromEntry, type Req, type Stage, type Win } from "./store";
 import { syncSheet } from "./sheets.functions";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -15,6 +15,19 @@ const toRow = (r: Partial<Req>) => {
   return o;
 };
 
+// New accounts get a few fictional example operations once, so first-time users see how stages and deadlines work.
+const local = (ms: number) => { const d = new Date(ms); const p = (n: number) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+export function exampleOps(now = Date.now()) {
+  const D = 86400000;
+  const mk = (decl: string, port: string, daysAgo: number, demDays: number, stage: Stage, extra: Record<string, unknown> = {}) => { const entry = local(now - daysAgo * D); return { decl, port, entry, storage: storageFromEntry(entry), demurrage: demurrageFromEntry(entry, demDays), stage, auto: true, win: "not_open", ...extra }; };
+  return [
+    mk("EJEMPLO-26001IC04000001A", "Buenos Aires", 2, 10, "pending"),
+    mk("EJEMPLO-26001IC04000002B", "Buenos Aires", 4, 5, "released", { released_at: now - 30 * 60000 }),
+    mk("EJEMPLO-26033IC04000003C", "Rosario", 29, 10, "ready", { win: "closed", booked_at: now - 3600000 }),
+    mk("EJEMPLO-26073IC04000004D", "Zárate", 12, 10, "completed", { win: "closed" }),
+  ];
+}
+
 export function useOperations() {
   const [items, setItems] = useState<Req[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,8 +35,12 @@ export function useOperations() {
   const [sheet, setSheet] = useState<{ url?: string; status: "idle" | "syncing" | "ok" | "error" }>({ status: "idle" });
   const sync = useServerFn(syncSheet);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<void> => {
     const { data } = await supabase.from("operations").select("*").order("created_at", { ascending: false });
+    if (data && data.length === 0) {
+      const { data: u } = await supabase.auth.getUser(); const k = u.user && `pp-examples-${u.user.id}`;
+      if (k && !localStorage.getItem(k)) { localStorage.setItem(k, "1"); const { error } = await supabase.from("operations").insert(exampleOps() as never); if (!error) return load(); }
+    }
     setItems((data ?? []).map(fromRow)); setLoading(false);
   }, []);
   const pushSheet = useCallback(() => {
