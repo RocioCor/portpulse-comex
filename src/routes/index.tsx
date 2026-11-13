@@ -10,6 +10,7 @@ import { SailingShip, BackToTop } from "@/components/ShipAndTop";
 import { useOperations } from "@/lib/operations";
 import { Login } from "@/components/Login";
 import { EmailAlerts } from "@/components/EmailAlerts";
+import { DemoGmailAlerts } from "@/components/DemoGmailAlerts";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
@@ -112,7 +113,7 @@ function App({ email }: { email: string }) {
       {tab === "cfg" ? <main className="relative isolate min-h-screen overflow-hidden">
         <img src={portOperations.url} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full scale-105 object-cover object-center blur-sm" />
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-background/85" />
-        <div className="mx-auto max-w-6xl px-4 py-8 grid md:grid-cols-2 gap-6 items-start"><WhatsApp items={open} now={now} />{member && <EmailAlerts />}
+        <div className="mx-auto max-w-6xl px-4 py-8 grid md:grid-cols-2 gap-6 items-start"><WhatsApp items={open} now={now} />{member ? <EmailAlerts /> : <DemoGmailAlerts />}
           {member ? <section className="space-y-2 rounded-lg border-2 border-border bg-card/95 backdrop-blur-md p-4">
             <h2 className="text-xl font-bold">📊 Google Sheets</h2>
             <p className="text-sm text-muted-foreground">Cada cambio se copia automáticamente a tu hoja de historial.</p>
