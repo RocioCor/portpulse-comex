@@ -152,7 +152,7 @@ function Stat({ label, value, tone = "bg-navy-foreground/10 border-navy-foregrou
   return <button type="button" onClick={onClick} aria-pressed={active} className={`text-left rounded-2xl border p-4 backdrop-blur-md shadow-lg text-navy-foreground transition hover:scale-[1.02] ${active ? "ring-2 ring-navy-foreground" : ""} ${tone}`}><div className="text-3xl font-bold font-mono">{value}</div><div className="text-sm">{label}</div></button>;
 }
 
-function Deadline({ iso, kind, now, start }: { iso: string | undefined; kind: "storage" | "demurrage"; now: number; start?: string }) {
+function Deadline({ iso, kind, now, start }: { iso: string | undefined; kind: "storage" | "demurrage"; now: number; start?: string | undefined }) {
   const { t, lang } = useI18n();
   const status = deadlineStatus(iso, now, kind === "demurrage" ? 24 : 48);
   const fd = freeDaysLeft(iso, now);
