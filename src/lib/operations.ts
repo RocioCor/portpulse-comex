@@ -18,6 +18,7 @@ const toRow = (r: Partial<Req>) => {
 export function useOperations() {
   const [items, setItems] = useState<Req[]>([]);
   const [loading, setLoading] = useState(true);
+  const [member, setMember] = useState(false);
   const [sheet, setSheet] = useState<{ url?: string; status: "idle" | "syncing" | "ok" | "error" }>({ status: "idle" });
   const sync = useServerFn(syncSheet);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -32,10 +33,11 @@ export function useOperations() {
       try { const r = await sync(); setSheet({ url: r.url, status: "ok" }); } catch { setSheet((s) => ({ ...s, status: "error" })); }
     }, 1500);
   }, [sync]);
-  useEffect(() => { load(); supabase.from("app_settings").select("value").eq("key", "sheet_id").maybeSingle().then(({ data }) => data && setSheet({ url: `https://docs.google.com/spreadsheets/d/${data.value}/edit`, status: "idle" })); }, [load]);
+  useEffect(() => { load(); supabase.from("user_sheets").select("sheet_id").maybeSingle().then(({ data }) => data && setSheet({ url: `https://docs.google.com/spreadsheets/d/${data.sheet_id}/edit`, status: "idle" }));
+    supabase.auth.getUser().then(({ data }) => data.user && supabase.rpc("is_team_member", { _uid: data.user.id }).then(({ data: m }) => setMember(!!m))); }, [load]);
   const write = async (p: PromiseLike<{ error: unknown }>) => { const { error } = await p; if (error) alert("No se pudo guardar. Intenta de nuevo."); await load(); pushSheet(); };
   return {
-    items, loading, sheet, syncNow: pushSheet,
+    items, loading, member, sheet, syncNow: pushSheet,
     add: (r: Req) => write(supabase.from("operations").insert(toRow(r) as never)),
     update: (id: string, stage: Stage) => { const cur = items.find((i) => i.id === id); if (cur) write(supabase.from("operations").update({ ...toRow(applyStage(cur, stage)), updated_at: new Date().toISOString() } as never).eq("id", id)); },
     patch: (id: string, p: Partial<Req>) => write(supabase.from("operations").update({ ...toRow(p), updated_at: new Date().toISOString() } as never).eq("id", id)),

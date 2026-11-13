@@ -16,7 +16,7 @@ export function Login() {
     else { const { error } = await supabase.auth.signUp({ email, password: pw, options: { emailRedirectTo: window.location.origin } }); setMsg(error ? error.message : "Revisa tu correo y confirma tu cuenta para entrar."); }
     setBusy(false);
   };
-  const google = async () => { const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin }); if (r.error) setMsg("No se pudo entrar con Google."); };
+  const google = async () => { const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin, extraParams: { prompt: "select_account" } }); if (r.error) setMsg("No se pudo entrar con Google."); };
   return (
     <div className="relative min-h-screen bg-navy text-navy-foreground flex items-center justify-center p-4 overflow-hidden">
       <img src={portHeader} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />

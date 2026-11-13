@@ -1,6 +1,6 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { I18nProvider, useI18n } from "@/lib/i18n";
+import { I18nProvider, useI18n, dict } from "@/lib/i18n";
 import { inRange, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storageFromEntry, demurrageFromEntry, demurrageValid, DEMURRAGE_MAX_DAYS, type Stage, type Win, type Req } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -48,7 +48,7 @@ function Gate() {
 
 function App({ email }: { email: string }) {
   const { t, lang, setLang } = useI18n();
-  const { items, add, update, patch, remove, sheet, syncNow, loading } = useOperations();
+  const { items, add, update, patch, remove, sheet, syncNow, loading, member } = useOperations();
   const [port, setPort] = useState("all");
   const [sf, setSf] = useState(""); const [st, setSt] = useState("");
   const [df, setDf] = useState(""); const [dt, setDt] = useState("");
@@ -112,14 +112,18 @@ function App({ email }: { email: string }) {
       {tab === "cfg" ? <main className="relative isolate min-h-screen overflow-hidden">
         <img src={portOperations.url} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full scale-105 object-cover object-center blur-sm" />
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-background/85" />
-        <div className="mx-auto max-w-6xl px-4 py-8 grid md:grid-cols-2 gap-6 items-start"><WhatsApp items={open} now={now} /><EmailAlerts />
-          <section className="space-y-2 rounded-lg border-2 border-border bg-card/95 backdrop-blur-md p-4">
+        <div className="mx-auto max-w-6xl px-4 py-8 grid md:grid-cols-2 gap-6 items-start"><WhatsApp items={open} now={now} />{member && <EmailAlerts />}
+          {member ? <section className="space-y-2 rounded-lg border-2 border-border bg-card/95 backdrop-blur-md p-4">
             <h2 className="text-xl font-bold">📊 Google Sheets</h2>
             <p className="text-sm text-muted-foreground">Cada cambio se copia automáticamente a tu hoja de historial.</p>
             <p className="text-sm font-semibold">{sheet.status === "syncing" ? "⏳ Actualizando hoja…" : sheet.status === "ok" ? "✓ Hoja actualizada" : sheet.status === "error" ? "⚠️ No se pudo actualizar la hoja" : sheet.url ? "Hoja conectada" : "Aún no se crea la hoja"}</p>
             {sheet.url && <a className="block text-primary underline font-semibold" href={sheet.url} target="_blank" rel="noreferrer">Abrir hoja de cálculo ↗</a>}
             <Button variant="outline" className="h-12 w-full" onClick={syncNow}>{sheet.url ? "Actualizar ahora" : "Crear hoja y copiar operaciones"}</Button>
-          </section></div></main> : <main className="relative isolate min-h-screen overflow-hidden">
+          </section> : <section className="space-y-2 rounded-lg border-2 border-border bg-card/95 backdrop-blur-md p-4">
+            <h2 className="text-xl font-bold">📊 Planilla</h2>
+            <p className="text-sm text-muted-foreground">Descarga tus operaciones para abrirlas en Excel o Google Sheets.</p>
+            <Button variant="outline" className="h-12 w-full" onClick={() => downloadCsv(items)}>⬇ Descargar planilla (CSV)</Button>
+          </section>}</div></main> : <main className="relative isolate min-h-screen overflow-hidden">
         <img src={portOperations.url} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full object-cover object-center" />
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-background/75" />
         <section id="ops-list" className="mx-auto max-w-6xl px-4 py-8 scroll-mt-4">
@@ -287,4 +291,12 @@ function WhatsApp({ items, now }: { items: Req[]; now: number }) {
       </div>
     </section>
   );
+}
+
+function downloadCsv(items: Req[]) {
+  const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const head = ["Despacho n.º", "Puerto / Aduana", "Etapa", "Ingreso depósito fiscal", "Vence almacenaje terminal", "Vence naviera / contenedor", "Turno terminal"];
+  const rows = items.map((i) => [i.decl, i.port, dict.es.st[i.stage] ?? i.stage, i.entry, i.storage, i.demurrage, dict.es.w[i.win] ?? i.win]);
+  const blob = new Blob(["\uFEFF" + [head, ...rows].map((r) => r.map(esc).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "portpulse-operaciones.csv"; a.click(); URL.revokeObjectURL(a.href);
 }

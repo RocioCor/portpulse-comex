@@ -11,7 +11,9 @@ export const Route = createFileRoute("/api/public/jobs/email-alerts")({
     const { data: set } = await sb.from("app_settings").select("key,value").in("key", ["alert_email", "alerts_enabled"]);
     const cfg = Object.fromEntries((set ?? []).map((s) => [s.key, s.value]));
     if (!cfg["alert_email"] || cfg["alerts_enabled"] !== "true") return Response.json({ skipped: true });
-    const { data: ops } = await sb.from("operations").select("*");
+    // Gmail alerts belong to the team owner, so only team members' own operations are emailed.
+    const { data: members } = await sb.from("team_members").select("user_id");
+    const { data: ops } = await sb.from("operations").select("*").in("created_by", (members ?? []).map((m) => m.user_id));
     const n = (v: number | null) => (v === null ? undefined : Number(v));
     const items = (ops ?? []).map((r) => ({ id: r.id, decl: r.decl, port: r.port, entry: r.entry ?? undefined, storage: r.storage, demurrage: r.demurrage ?? undefined, win: r.win, auto: r.auto, stage: r.stage, releasedAt: n(r.released_at), bookedAt: n(r.booked_at), createdAt: 0 }) as Req);
     const alerts = dueAlerts(items);

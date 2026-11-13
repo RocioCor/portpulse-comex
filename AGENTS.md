@@ -33,7 +33,7 @@ use the editor.
 - Centralize deadline evaluation in the browser-safe store helpers; preserve legacy date-only values as end-of-day deadlines so existing requests remain readable.
 - Render the browser-local request dashboard after hydration to avoid mismatches from dynamic demo timestamps and local timezone formatting.
 
-- Operations live in the Cloud `operations` table (shared by all signed-in team members); Google Sheets is a one-way mirror rewritten by `syncSheet` after each change, never read back — keeps one source of truth and stays within Sheets quotas.
+- Operations are private per account (`created_by` = owner via RLS); the shared Google Sheets mirror and Gmail alerts serve only team members, others export CSV; Google Sheets is a one-way mirror rewritten by `syncSheet` after each change, never read back — keeps one source of truth and stays within Sheets quotas.
 - Email deadline alerts are sent from the linked Gmail by a 15-minute scheduled route; each alert has a stable key recorded in `email_alerts_sent` so it is emailed once (turn reminders once per 2 h cycle).
 - Keep operation terminology in the bilingual dictionary and retain persisted identifiers and stage keys when labels change, so existing records remain readable.
 - Store Gmail contact names separately from the comma-separated alert recipient addresses; the scheduled sender must retain its existing address format and legacy recipients.

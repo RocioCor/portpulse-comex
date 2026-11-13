@@ -21,12 +21,16 @@ export const syncSheet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sb = context.supabase;
-    const { data: setting } = await sb.from("app_settings").select("value").eq("key", "sheet_id").maybeSingle();
-    let id = setting?.value;
+    // The shared Sheets connection belongs to the team owner; other accounts can't write into it.
+    const { data: isMember } = await sb.rpc("is_team_member", { _uid: context.userId });
+    if (!isMember) throw new Error("Google Sheets solo está disponible para la cuenta principal.");
+    const { data: mine } = await sb.from("user_sheets").select("sheet_id").maybeSingle();
+    let id = mine?.sheet_id;
+    if (!id) { const { data: legacy } = await sb.from("app_settings").select("value").eq("key", "sheet_id").maybeSingle(); id = legacy?.value; if (id) await sb.from("user_sheets").upsert({ user_id: context.userId, sheet_id: id }); }
     if (!id) {
       const created = await gw("/spreadsheets", { method: "POST", body: JSON.stringify({ properties: { title: "PortPulse – Historial" }, sheets: [{ properties: { title: TAB } }] }) });
       id = created.spreadsheetId as string;
-      const { error } = await sb.from("app_settings").upsert({ key: "sheet_id", value: id });
+      const { error } = await sb.from("user_sheets").upsert({ user_id: context.userId, sheet_id: id });
       if (error) throw new Error(error.message);
     }
     const { data: ops, error } = await sb.from("operations").select("*").order("created_at", { ascending: false });
