@@ -29,6 +29,7 @@ const stageCls: Record<Stage, string> = {
   pending: "bg-warning/20 text-foreground border-warning", released: "bg-primary text-primary-foreground border-primary", sim_active: "bg-warning text-foreground border-warning",
   ready: "bg-success text-navy-foreground border-success", completed: "bg-muted text-muted-foreground border-border",
 };
+const stampCls: Record<Stage, string> = { pending: "border-warning text-warning", released: "border-primary text-primary", sim_active: "border-warning text-warning", ready: "border-success text-success", completed: "border-muted-foreground text-muted-foreground" };
 const input = "w-full h-14 rounded-lg border-2 border-input bg-card px-4 text-lg focus:border-primary outline-none";
 
 function useNow() { const [n, setN] = useState(Date.now()); useEffect(() => { const i = setInterval(() => setN(Date.now()), 30000); return () => clearInterval(i); }, []); return n; }
@@ -151,7 +152,7 @@ function Stat({ label, value, tone = "bg-navy-foreground/10 border-navy-foregrou
   return <button type="button" onClick={onClick} aria-pressed={active} className={`text-left rounded-2xl border p-4 backdrop-blur-md shadow-lg text-navy-foreground transition hover:scale-[1.02] ${active ? "ring-2 ring-navy-foreground" : ""} ${tone}`}><div className="text-3xl font-bold font-mono">{value}</div><div className="text-sm">{label}</div></button>;
 }
 
-function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage" | "demurrage"; now: number }) {
+function Deadline({ iso, kind, now, start }: { iso: string | undefined; kind: "storage" | "demurrage"; now: number; start?: string }) {
   const { t, lang } = useI18n();
   const status = deadlineStatus(iso, now, kind === "demurrage" ? 24 : 48);
   const fd = freeDaysLeft(iso, now);
@@ -163,6 +164,8 @@ function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage"
     <div className="text-sm text-muted-foreground">{kind === "storage" ? t.collect : t.returnEmpty}</div>
     <div className="text-sm">{date}</div>
     {fd !== null && <div className="text-sm font-bold">{fd} {kind === "storage" ? t.storageLeft : t.containerLeft}</div>}
+    {(() => { const a = start ? Date.parse(start.length === 10 ? start + "T00:00" : start) : NaN, b = iso ? Date.parse(iso.length === 10 ? iso + "T23:59:59" : iso) : NaN; if (isNaN(a) || isNaN(b) || b <= a) return null; const pct = Math.min(100, Math.max(0, ((now - a) / (b - a)) * 100)); const tot = Math.round((b - a) / 86400000); const used = Math.min(tot, Math.max(0, Math.floor((now - a) / 86400000)));
+      return <div><div className="h-2 w-full overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full transition-all ${status === "expired" ? "bg-danger" : status === "warning" ? "bg-warning" : kind === "storage" ? "bg-primary" : "bg-success"}`} style={{ width: `${pct}%` }} /></div><div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{used}/{tot} {lang === "es" ? "días usados" : "days used"}</div></div>; })()}
     <span className={`inline-block px-2 py-1 rounded-full border text-xs font-bold backdrop-blur-sm ${cls}`}>{label}</span>
   </div>;
 }
@@ -174,12 +177,12 @@ function Card({ r, now, onStage, onPatch, onDelete }: { r: Req; now: number; onS
   return (
     <article className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md shadow-sm p-4">
       <div className="flex flex-wrap justify-between gap-2">
-        <div><div className="font-mono font-medium text-lg">{r.decl}</div><div className="text-muted-foreground">{r.port}</div></div>
-        <span className={`self-start px-3 py-1 rounded-full border-2 text-sm font-semibold ${stageCls[r.stage]}`}>{t.st[r.stage]}</span>
+        <div className="min-w-0"><div className="inline-flex items-stretch overflow-hidden rounded-md border-2 border-navy font-mono text-lg font-bold tracking-wider shadow-sm"><span className="bg-navy px-2 text-xs font-semibold text-navy-foreground flex items-center">DIN</span><span className="px-3 py-0.5 bg-card">{r.decl.replace(/^DIN-?/i, "")}</span></div><div className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">⚓ {r.port}</div></div>
+        <span className={`self-start -rotate-2 px-3 py-1 rounded-sm border-[3px] border-double bg-transparent text-xs font-black uppercase tracking-widest ${stampCls[r.stage]}`}>{t.st[r.stage]}</span>
       </div>
       {r.stage === "completed" ? <div className="mt-3 rounded-lg bg-muted p-3 text-sm font-semibold">✓ {t.archived}</div> : <div className="mt-4 grid sm:grid-cols-2 gap-4">
-        <div>{r.entry && <div className="text-xs text-muted-foreground pl-3 mb-1">{t.entryLbl}: {new Date(r.entry.length === 10 ? r.entry + "T00:00" : r.entry).toLocaleDateString(lang === "es" ? "es-CL" : "en-GB")}</div>}<Deadline iso={r.storage} kind="storage" now={now} /></div>
-        <Deadline iso={r.demurrage} kind="demurrage" now={now} />
+        <div>{r.entry && <div className="text-xs text-muted-foreground pl-3 mb-1">{t.entryLbl}: {new Date(r.entry.length === 10 ? r.entry + "T00:00" : r.entry).toLocaleDateString(lang === "es" ? "es-CL" : "en-GB")}</div>}<Deadline iso={r.storage} kind="storage" now={now} start={r.entry} /></div>
+        <Deadline iso={r.demurrage} kind="demurrage" now={now} start={r.entry} />
       </div>}
       {r.stage === "pending" && <div className="mt-4 rounded-xl border border-border bg-muted/40 p-3 text-sm"><span className="font-semibold">⏳ {t.waitCustoms}</span></div>}
       {r.stage === "ready" && <div className="mt-3 rounded-lg bg-success/20 p-3 text-sm font-semibold">🚚 {t.readyHint}</div>}
