@@ -156,6 +156,7 @@ function App({ email }: { email: string }) {
           </div>
         </section>
       </main>}
+      <footer className="bg-navy text-navy-foreground/80 py-4 text-center text-sm">{lang === "es" ? "Prototipo de Rocío Fabiana Corredera" : "Prototype by Rocío Fabiana Corredera"}</footer>
       {toast && <div role="status" className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-success text-navy-foreground px-6 py-4 rounded-lg shadow-lg font-semibold">✓ {t.saved}: {toast}</div>}
     </div>
   );

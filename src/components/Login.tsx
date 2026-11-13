@@ -50,6 +50,7 @@ export function Login() {
         {msg && <p role="status" className="text-sm font-semibold">{msg}</p>}
         <button type="button" className="text-sm underline" onClick={() => { setMode(mode === "in" ? "up" : "in"); setMsg(""); }}>{mode === "in" ? l.toUp : l.toIn}</button>
       </div>
+      <p className="text-center text-sm opacity-80 drop-shadow">{lang === "es" ? "Prototipo de Rocío Fabiana Corredera" : "Prototype by Rocío Fabiana Corredera"}</p>
       </div>
     </div>
   );
