@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { dict } from "./i18n";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 const TAB = "Operaciones";
-const HEAD = ["DIN", "Puerto / Aduana", "Etapa", "Ingreso depósito fiscal", "Vence almacenaje terminal (30 días)", "Vence naviera / contenedor", "Turno terminal", "Aviso automático", "Creada", "Actualizada"];
-const STAGE: Record<string, string> = { pending: "Revisión aduanera pendiente", released: "Librado por aduana", sim_active: "Turno terminal en curso", ready: "Listo para retiro en puerto", completed: "Completado" };
-const WIN: Record<string, string> = { not_open: "Pedir urgente", open: "Pedido", closed: "Turno cumplido" };
+const HEAD = [dict.es.decl, "Puerto / Aduana", "Etapa", "Ingreso depósito fiscal", "Vence almacenaje terminal (30 días)", "Vence naviera / contenedor", "Turno terminal", "Aviso automático", "Creada", "Actualizada"];
+const STAGE: Record<string, string> = dict.es.st;
+const WIN: Record<string, string> = dict.es.w;
 
 async function gw(path: string, init: RequestInit = {}) {
   const lk = process.env["LOVABLE_API_KEY"], ck = process.env["GOOGLE_SHEETS_API_KEY"];

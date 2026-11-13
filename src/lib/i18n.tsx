@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 export type Lang = "en" | "es";
-const dict = {
+export const dict = {
   en: {
     app: "PortPulse", tagline: "Customs releases, 2-hour terminal slots and storage deadlines in one place.",
     open: "Open requests", simActive: "Terminal slot in progress", dueToday: "Storage expires today", expiring: "Expiring ≤ 2 days",

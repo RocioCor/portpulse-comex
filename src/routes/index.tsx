@@ -72,14 +72,14 @@ function App({ email }: { email: string }) {
         <img src={portHeader} alt="" aria-hidden width={1920} height={640} className="absolute inset-0 h-full w-full object-cover opacity-45" />
         <div className="absolute inset-0 bg-gradient-to-b from-navy/70 via-navy/60 to-navy" />
         <div className="relative">
-        <div className="mx-auto max-w-6xl px-4 py-6 flex flex-wrap items-center justify-between gap-4">
-          <div><h1 className="text-2xl font-bold tracking-tight">⚓ {t.app}</h1><p className="opacity-75">{t.tagline}</p></div>
-          <div className="flex rounded-lg border border-navy-foreground/30 overflow-hidden" role="group" aria-label="Language">
+        <div className="mx-auto max-w-6xl px-4 py-6 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4">
+          <div className="min-w-0 sm:col-span-2 lg:col-span-1"><h1 className="text-2xl font-bold tracking-tight">⚓ {t.app}</h1><p className="min-h-24 sm:min-h-12 opacity-75">{t.tagline}</p></div>
+          <div className="flex w-44 shrink-0 self-start rounded-lg border border-navy-foreground/30 overflow-hidden" role="group" aria-label="Language">
             {(["es", "en"] as const).map((l) => (
-              <Button key={l} onClick={() => setLang(l)} className={`rounded-none px-4 py-2 font-semibold ${lang === l ? "bg-navy-foreground text-navy" : "bg-transparent text-navy-foreground"}`}>{l === "es" ? "Español" : "English"}</Button>
+              <Button key={l} onClick={() => setLang(l)} aria-pressed={lang === l} className={`w-1/2 rounded-none px-4 py-2 font-semibold ${lang === l ? "bg-navy-foreground text-navy" : "bg-transparent text-navy-foreground"}`}>{l === "es" ? "Español" : "English"}</Button>
             ))}
           </div>
-          <div className="flex items-center gap-3 text-sm"><span className="opacity-75">{email}</span><Button variant="outline" className="bg-transparent text-navy-foreground border-navy-foreground/40" onClick={() => supabase.auth.signOut()}>Salir</Button></div>
+          <div className="flex min-w-0 items-center justify-end gap-3 text-sm"><span className="min-w-0 break-all opacity-75">{email}</span><Button variant="outline" className="shrink-0 bg-transparent text-navy-foreground border-navy-foreground/40" onClick={() => supabase.auth.signOut()}>Salir</Button></div>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat active={kpi === "open"} onClick={() => pickKpi("open")} label={lang === "es" ? "Cargas activas" : "Active loads"} value={open.length} />

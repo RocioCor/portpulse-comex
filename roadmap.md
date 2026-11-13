@@ -1,3 +1,5 @@
 - [x] Cambiar las etiquetas a Despacho n.º, Librado plaza y Solicitar turno de nuevo, sin alterar datos ni estados guardados.
 - [x] Usar la foto proporcionada detrás de las operaciones conservando la cabecera actual.
 - [x] Revisar las tarjetas y el formulario en escritorio y móvil.
+- [x] Mantener el selector de idioma estable al cambiar a inglés.
+- [x] Usar Despacho n.º y las etiquetas operativas actuales en Google Sheets.
