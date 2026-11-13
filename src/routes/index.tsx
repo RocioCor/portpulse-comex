@@ -5,6 +5,7 @@ import { inRange, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storag
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import portHeader from "@/assets/port-header.jpg";
+import { SailingShip, BackToTop } from "@/components/ShipAndTop";
 import { useOperations } from "@/lib/operations";
 import { Login } from "@/components/Login";
 import { EmailAlerts } from "@/components/EmailAlerts";
@@ -89,7 +90,10 @@ function App({ email }: { email: string }) {
           <Button onClick={() => setFormOpen(true)} className="h-12 rounded-full px-6 text-base font-bold bg-success text-navy-foreground shadow-lg">+ Nueva operación</Button>
         </div>
         </div>
+        <div className="h-16" />
+        <SailingShip />
       </header>
+      <BackToTop />
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>+ Nueva operación</DialogTitle></DialogHeader>

@@ -168,3 +168,9 @@
 
 @keyframes flash { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
 @utility animate-flash { animation: flash 1s ease-in-out infinite; }
+@keyframes sail { 0% { transform: translateX(-140px) scaleX(1) } 49% { transform: translateX(calc(100vw + 20px)) scaleX(1) } 50% { transform: translateX(calc(100vw + 20px)) scaleX(-1) } 99% { transform: translateX(-140px) scaleX(-1) } 100% { transform: translateX(-140px) scaleX(1) } }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-1.5deg) } 50% { transform: translateY(-3px) rotate(1.5deg) } }
+@keyframes wave { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+@utility animate-sail { animation: sail 40s linear infinite; }
+@utility animate-bob { animation: bob 3s ease-in-out infinite; }
+@utility animate-wave { animation: wave 6s linear infinite; }
