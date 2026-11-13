@@ -37,7 +37,7 @@ export function EmailAlerts() {
   const rename = (r: EmailRecipient) => { const value = prompt("Nombre del destinatario", r.name); if (value === null) return; if (!value.trim()) return setMsg("⚠️ Ingresa un nombre"); save(list.map((x) => x.email === r.email ? { ...x, name: value.trim().slice(0, 80) } : x), on); };
   const sendTest = async (r: EmailRecipient) => { const label = recipientLabel(r); setMsg(`⏳ Enviando a ${label}…`); try { await test({ data: { to: r.email } }); setMsg(`✓ Prueba enviada a ${label}`); } catch { setMsg("⚠️ No se pudo enviar."); } };
   return (
-    <section className="space-y-3 rounded-lg border-2 border-border p-4">
+    <section className="space-y-3 rounded-lg border-2 border-border bg-card/95 backdrop-blur-md p-4">
       <h2 className="text-xl font-bold">📧 Avisos por Gmail</h2>
       <p className="text-sm text-muted-foreground">Se revisa cada 15 min. Avisa almacenaje a 48 h, naviera a 24 h y turno terminal cada 2 h tras el libramiento. Los avisos llegan a todos los correos de la lista.</p>
       <form className="grid gap-2" onSubmit={(e) => { e.preventDefault(); add(); }}>
