@@ -1,0 +1,3 @@
+- [x] Cambiar las etiquetas a Despacho n.º, Librado plaza y Solicitar turno de nuevo, sin alterar datos ni estados guardados.
+- [x] Usar la foto proporcionada detrás de las operaciones conservando la cabecera actual.
+- [x] Revisar las tarjetas y el formulario en escritorio y móvil.

@@ -5,6 +5,7 @@ import { inRange, deadlineStatus, applyStage, turnReminder, freeDaysLeft, storag
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import portHeader from "@/assets/port-header.jpg";
+import portOperations from "@/assets/port-operations.png.asset.json";
 import { SailingShip, BackToTop } from "@/components/ShipAndTop";
 import { useOperations } from "@/lib/operations";
 import { Login } from "@/components/Login";
@@ -113,8 +114,10 @@ function App({ email }: { email: string }) {
             <p className="text-sm font-semibold">{sheet.status === "syncing" ? "⏳ Actualizando hoja…" : sheet.status === "ok" ? "✓ Hoja actualizada" : sheet.status === "error" ? "⚠️ No se pudo actualizar la hoja" : sheet.url ? "Hoja conectada" : "Aún no se crea la hoja"}</p>
             {sheet.url && <a className="block text-primary underline font-semibold" href={sheet.url} target="_blank" rel="noreferrer">Abrir hoja de cálculo ↗</a>}
             <Button variant="outline" className="h-12 w-full" onClick={syncNow}>{sheet.url ? "Actualizar ahora" : "Crear hoja y copiar operaciones"}</Button>
-          </section></main> : <main className="mx-auto max-w-6xl px-4 py-8">
-        <section id="ops-list" className="scroll-mt-4">
+          </section></main> : <main className="relative isolate min-h-screen overflow-hidden">
+        <img src={portOperations.url} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full object-cover object-center" />
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-background/75" />
+        <section id="ops-list" className="mx-auto max-w-6xl px-4 py-8 scroll-mt-4">
           <h2 className="text-xl font-bold mb-3">{t.reqs}</h2>
           {kpi && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 p-3 text-sm font-semibold">{lang === "es" ? "Mostrando" : "Showing"}: {kpiLabel} ({list.length})<Button variant="outline" size="sm" className="ml-auto" onClick={() => setKpi("")}>✕ {lang === "es" ? "Mostrar todas" : "Show all"}</Button></div>}
           <input className={input + " mb-3"} placeholder={t.search} value={q} onChange={(e) => setQ(e.target.value)} />
@@ -125,7 +128,7 @@ function App({ email }: { email: string }) {
               </Button>
             ))}
           </div>
-          <div className="grid sm:grid-cols-2 gap-3 mb-4 rounded-lg bg-muted p-3">
+          <div className="grid sm:grid-cols-2 gap-3 mb-4 rounded-lg bg-card/80 backdrop-blur-md p-3">
             <label className="block text-sm font-medium sm:col-span-2">{t.port}
               <select className={input + " mt-1 h-12 text-base"} value={port} onChange={(e) => setPort(e.target.value)}>
                 <option value="all">{t.all}</option>{ports.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -174,9 +177,9 @@ function Card({ r, now, onStage, onPatch, onDelete }: { r: Req; now: number; onS
   const { t, lang } = useI18n();
   const mins = r.simOpenedAt ? 120 - Math.floor((now - r.simOpenedAt) / 60000) : 0;
   return (
-    <article className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md shadow-sm p-4">
+    <article className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur-md shadow-sm p-4">
       <div className="flex flex-wrap justify-between gap-2">
-        <div className="min-w-0"><div className="inline-flex items-stretch overflow-hidden rounded-md border-2 border-navy font-mono text-lg font-bold tracking-wider shadow-sm"><span className="bg-navy px-2 text-xs font-semibold text-navy-foreground flex items-center">DIN</span><span className="px-3 py-0.5 bg-card">{r.decl.replace(/^DIN-?/i, "")}</span></div><div className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">⚓ {r.port}</div></div>
+        <div className="min-w-0 max-w-full"><div className="inline-flex max-w-full items-stretch overflow-hidden rounded-md border-2 border-navy font-mono text-lg font-bold shadow-sm"><span className="shrink-0 bg-navy px-2 text-xs font-semibold text-navy-foreground flex items-center">{t.decl}</span><span className="min-w-0 break-all px-3 py-0.5 bg-card">{r.decl.replace(/^DIN-?/i, "")}</span></div><div className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">⚓ {r.port}</div></div>
         <span className={`self-start -rotate-2 px-3 py-1 rounded-sm border-[3px] border-double bg-transparent text-xs font-black uppercase tracking-widest ${stampCls[r.stage]}`}>{t.st[r.stage]}</span>
       </div>
       {r.stage === "completed" ? <div className="mt-3 rounded-lg bg-muted p-3 text-sm font-semibold">✓ {t.archived}</div> : <div className="mt-4 grid sm:grid-cols-2 gap-4">
@@ -221,7 +224,7 @@ function NewForm({ onAdd }: { onAdd: (r: Req) => void }) {
   return (
     <form onSubmit={submit} className="space-y-4 self-start min-w-0">
       <h2 className="text-xl font-bold">{t.newReq}</h2>
-      <label className="block font-medium">{t.decl}<input required maxLength={40} className={input + " mt-1 font-mono"} placeholder="DIN-2026-000000" value={f.decl} onChange={(e) => setF({ ...f, decl: e.target.value })} /></label>
+      <label className="block font-medium">{t.decl}<input required maxLength={40} className={input + " mt-1 font-mono"} placeholder="2026-000000" value={f.decl} onChange={(e) => setF({ ...f, decl: e.target.value })} /></label>
       <label className="block font-medium">{t.port}<input required maxLength={80} className={input + " mt-1"} placeholder="San Antonio" value={f.port} onChange={(e) => setF({ ...f, port: e.target.value })} /></label>
       <div>
         <label className="block font-medium">{t.entry}<input required type="datetime-local" aria-describedby="storage-hint" className={input + " mt-1 min-w-0 max-w-full text-base"} value={f.entry} onChange={(e) => setF({ ...f, entry: e.target.value, demurrage: e.target.value ? demurrageFromEntry(e.target.value, f.days) : "" })} /></label>
