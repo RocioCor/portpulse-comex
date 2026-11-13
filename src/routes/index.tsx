@@ -76,10 +76,10 @@ function App({ email }: { email: string }) {
           <div className="flex items-center gap-3 text-sm"><span className="opacity-75">{email}</span><Button variant="outline" className="bg-transparent text-navy-foreground border-navy-foreground/40" onClick={() => supabase.auth.signOut()}>Salir</Button></div>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat label={t.open} value={open.length} />
-          <Stat label={t.released} value={open.filter((i) => turnReminder(i, now)).length} tone="bg-warning text-navy" />
-           <Stat label={"🟠 " + t.storageAlert} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.storage, now))).length} tone="bg-warning text-navy" />
-           <Stat label={"🔴 " + t.demurrageAlert24} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.demurrage, now, 24))).length} tone="bg-danger text-navy-foreground" />
+          <Stat label={lang === "es" ? "Cargas activas" : "Active loads"} value={open.length} />
+          <Stat label={t.released} value={open.filter((i) => turnReminder(i, now)).length} tone="bg-primary/25 border-primary/50" />
+           <Stat label={"🟠 " + t.storageAlert} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.storage, now))).length} tone="bg-warning/25 border-warning/50" />
+           <Stat label={"🔴 " + t.demurrageAlert24} value={open.filter((i) => ["warning", "expired"].includes(deadlineStatus(i.demurrage, now, 24))).length} tone="bg-danger/25 border-danger/50" />
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex rounded-full bg-navy-foreground/10 p-1 backdrop-blur" role="tablist">
@@ -142,15 +142,15 @@ function App({ email }: { email: string }) {
   );
 }
 
-function Stat({ label, value, tone = "bg-navy-foreground/10" }: { label: string; value: number; tone?: string }) {
-  return <div className={`rounded-lg p-4 ${tone}`}><div className="text-3xl font-bold font-mono">{value}</div><div className="text-sm">{label}</div></div>;
+function Stat({ label, value, tone = "bg-navy-foreground/10 border-navy-foreground/20" }: { label: string; value: number; tone?: string }) {
+  return <div className={`rounded-2xl border p-4 backdrop-blur-md shadow-lg text-navy-foreground ${tone}`}><div className="text-3xl font-bold font-mono">{value}</div><div className="text-sm">{label}</div></div>;
 }
 
 function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage" | "demurrage"; now: number }) {
   const { t, lang } = useI18n();
   const status = deadlineStatus(iso, now, kind === "demurrage" ? 24 : 48);
   const fd = freeDaysLeft(iso, now);
-  const cls = status === "expired" ? "bg-danger text-navy-foreground" : status === "warning" ? "bg-warning text-foreground" : "bg-muted text-foreground";
+  const cls = status === "expired" ? "bg-danger/15 text-danger border-danger/40" : status === "warning" ? "bg-warning/20 text-foreground border-warning/50" : "bg-muted/60 text-foreground border-border";
   const label = status === "missing" ? t.deadlineMissing : status === "expired" ? t.deadlineExpired : status === "warning" ? (kind === "demurrage" ? t.soon24 : t.deadlineSoon) : t.deadlineOk;
   const date = iso ? new Date(iso.length === 10 ? iso + "T23:59:59" : iso).toLocaleString(lang === "es" ? "es-CL" : "en-GB", { day: "2-digit", month: "short", year: "numeric", ...(iso.length > 10 ? { hour: "2-digit", minute: "2-digit" } : {}) }) : "—";
   return <div className="min-w-0 border-l-2 border-border pl-3 space-y-1">
@@ -158,7 +158,7 @@ function Deadline({ iso, kind, now }: { iso: string | undefined; kind: "storage"
     <div className="text-sm text-muted-foreground">{kind === "storage" ? t.collect : t.returnEmpty}</div>
     <div className="text-sm">{date}</div>
     {fd !== null && <div className="text-sm font-bold">{fd} {kind === "storage" ? t.storageLeft : t.containerLeft}</div>}
-    <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${cls}`}>{label}</span>
+    <span className={`inline-block px-2 py-1 rounded-full border text-xs font-bold backdrop-blur-sm ${cls}`}>{label}</span>
   </div>;
 }
 
@@ -167,7 +167,7 @@ function Card({ r, now, onStage, onPatch, onDelete }: { r: Req; now: number; onS
   const { t, lang } = useI18n();
   const mins = r.simOpenedAt ? 120 - Math.floor((now - r.simOpenedAt) / 60000) : 0;
   return (
-    <article className="rounded-lg border-2 border-border bg-card p-4">
+    <article className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md shadow-sm p-4">
       <div className="flex flex-wrap justify-between gap-2">
         <div><div className="font-mono font-medium text-lg">{r.decl}</div><div className="text-muted-foreground">{r.port}</div></div>
         <span className={`self-start px-3 py-1 rounded-full border-2 text-sm font-semibold ${stageCls[r.stage]}`}>{t.st[r.stage]}</span>
@@ -178,14 +178,14 @@ function Card({ r, now, onStage, onPatch, onDelete }: { r: Req; now: number; onS
       </div>}
       {r.stage === "pending" && <div className="mt-3 rounded-lg bg-muted p-3"><Button disabled className="h-12">⏳ {t.waitCustoms}</Button><div className="text-sm mt-1 text-muted-foreground">{t.waitRelease}</div></div>}
       {r.stage === "ready" && <div className="mt-3 rounded-lg bg-success/20 p-3 text-sm font-semibold">🚚 {t.readyHint}</div>}
-      {r.stage === "released" && <div className={`mt-3 rounded-lg p-3 ${tr ? "bg-warning" : "bg-success/20"}`}>
+      {r.stage === "released" && <div className={`mt-3 rounded-xl border p-3 backdrop-blur-sm ${tr ? "bg-warning/20 border-warning/50" : "bg-success/15 border-success/40"}`}>
         {tr ? <><div className="font-bold">🔔 {t.turnN}{tr.count}: {t.turnDue}</div><div className="text-sm font-mono font-bold">⏱ {Math.floor(tr.nextInMin / 60)}h {tr.nextInMin % 60}m — {t.turnNext}</div>
           <Button className="mt-2 h-12" onClick={() => onPatch({ bookedAt: Date.now(), win: "open" })}>✓ {t.booked}</Button></>
         : <><div className="font-bold">✓ {t.bookedAt} {r.bookedAt && new Date(r.bookedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</div>
           <Button variant="outline" className="mt-2 h-12" onClick={() => onPatch({ bookedAt: undefined, releasedAt: Date.now(), win: "not_open" })}>↻ {t.rebook}</Button></>}
       </div>}
       <div className="mt-3 flex flex-wrap gap-2 items-center text-sm">
-        <span className={`px-2 py-1 rounded font-semibold ${r.win === "not_open" && r.stage !== "completed" && r.stage !== "pending" ? "bg-danger text-navy-foreground" : "bg-muted"}`}>{t.sim}: {r.stage === "pending" ? `⏳ ${t.waitCustoms}` : <>{r.win === "not_open" ? "🔴" : "🟢"} {t.w[r.win]}</>}</span>
+        <span className={`px-2 py-1 rounded font-semibold ${r.win === "not_open" && r.stage !== "completed" && r.stage !== "pending" ? "bg-danger/15 text-danger border border-danger/40" : "bg-muted/60"}`}>{t.sim}: {r.stage === "pending" ? `⏳ ${t.waitCustoms}` : <>{r.win === "not_open" ? "🔴" : "🟢"} {t.w[r.win]}</>}</span>
         {r.stage === "sim_active" && <span className={`px-2 py-1 rounded font-bold ${mins > 0 ? "bg-warning" : "bg-danger text-navy-foreground animate-flash"}`}>⏱ {mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m ${t.left}` : t.windowClosed}</span>}
         <span className="px-2 py-1 rounded bg-muted">{r.auto ? t.autoOn : t.autoOff}</span>
         {r.notifiedAt && <span className="px-2 py-1 rounded bg-success/20">🔔 {t.notified} {new Date(r.notifiedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</span>}
