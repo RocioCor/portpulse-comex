@@ -161,7 +161,6 @@ function Deadline({ iso, kind, now, start }: { iso: string | undefined; kind: "s
   const date = iso ? new Date(iso.length === 10 ? iso + "T23:59:59" : iso).toLocaleString(lang === "es" ? "es-CL" : "en-GB", { day: "2-digit", month: "short", year: "numeric", ...(iso.length > 10 ? { hour: "2-digit", minute: "2-digit" } : {}) }) : "—";
   return <div className="min-w-0 border-l-2 border-border pl-3 space-y-1">
     <div className="font-semibold text-sm">{kind === "storage" ? t.storage : t.demurrage}</div>
-    <div className="text-sm text-muted-foreground">{kind === "storage" ? t.collect : t.returnEmpty}</div>
     <div className="text-sm">{date}</div>
     {fd !== null && <div className="text-sm font-bold">{fd} {kind === "storage" ? t.storageLeft : t.containerLeft}</div>}
     {(() => { const a = start ? Date.parse(start.length === 10 ? start + "T00:00" : start) : NaN, b = iso ? Date.parse(iso.length === 10 ? iso + "T23:59:59" : iso) : NaN; if (isNaN(a) || isNaN(b) || b <= a) return null; const pct = Math.min(100, Math.max(0, ((now - a) / (b - a)) * 100)); const tot = Math.round((b - a) / 86400000); const used = Math.min(tot, Math.max(0, Math.floor((now - a) / 86400000)));
@@ -188,7 +187,7 @@ function Card({ r, now, onStage, onPatch, onDelete }: { r: Req; now: number; onS
       {r.stage === "ready" && <div className="mt-3 rounded-lg bg-success/20 p-3 text-sm font-semibold">🚚 {t.readyHint}</div>}
       {r.stage === "released" && <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/40 p-3">
         {tr ? <>
-          <div className="flex-1 min-w-[12rem]"><div className="font-semibold text-danger">🔴 {t.w.not_open}: {t.turnDue}</div><div className="text-xs text-muted-foreground">{t.turnNext} {Math.floor(tr.nextInMin / 60)}h {tr.nextInMin % 60}m · {t.turnN}{tr.count}</div></div>
+          <div className="flex-1 min-w-[12rem]"><div className="font-semibold">⏱ {t.turnDue}</div><div className="text-xs text-muted-foreground">{t.turnNext} {Math.floor(tr.nextInMin / 60)}h {tr.nextInMin % 60}m · {t.turnN}{tr.count}</div></div>
           <Button className="h-11" onClick={() => onPatch({ bookedAt: Date.now(), win: "open" })}>{lang === "es" ? "Ya pedí el turno" : "Slot booked"}</Button>
         </> : <>
           <div className="flex-1 min-w-[12rem] font-semibold text-success">🟢 {t.bookedAt} {r.bookedAt && new Date(r.bookedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}</div>
