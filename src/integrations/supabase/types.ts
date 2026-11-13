@@ -119,6 +119,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sheets: {
+        Row: {
+          sheet_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          sheet_id: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          sheet_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
