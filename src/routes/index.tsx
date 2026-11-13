@@ -270,7 +270,7 @@ function NewForm({ onAdd }: { onAdd: (r: Req) => void }) {
 function WhatsApp({ items, now }: { items: Req[]; now: number }) {
   const { t, lang } = useI18n();
   const [num, setNum] = useState("");
-  useEffect(() => { setNum(localStorage.getItem("wa") ?? "+56 9 1234 5678"); }, []);
+  useEffect(() => { const s = localStorage.getItem("wa"); setNum(!s || s === "+56 9 1234 5678" ? "+54 9 11 1234 5678" : s); }, []);
   const es = lang === "es";
   const msgs: string[] = [];
   for (const r of items) {
