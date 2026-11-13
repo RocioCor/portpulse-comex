@@ -6,7 +6,7 @@ import { Pencil } from "lucide-react";
 import { recipientLabel, validEmail, type EmailRecipient } from "@/lib/email-recipients";
 
 // Demo only: nothing is really sent and no Google account is linked. Saved in this browser per signed-in account.
-type Demo = { connected?: string; list: EmailRecipient[]; on: boolean; log: string[] };
+type Demo = { connected?: string | undefined; list: EmailRecipient[]; on: boolean; log: string[] };
 
 export function DemoGmailAlerts() {
   const [uid, setUid] = useState(""), [me, setMe] = useState("");
