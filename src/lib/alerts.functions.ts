@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const sendTestEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { to: string }) => { if (!/^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(d.to)) throw new Error("Correo no válido"); return d; })
+  .validator((d: { to: string }) => { if (!/^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(d.to)) throw new Error("Correo no válido"); return d; })
   .handler(async ({ data, context }) => {
     const { data: member } = await context.supabase.rpc("is_team_member", { _uid: context.userId });
     if (!member) throw new Error("No autorizado");
