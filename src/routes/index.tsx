@@ -235,7 +235,7 @@ function NewForm({ onAdd }: { onAdd: (r: Req) => void }) {
     <form onSubmit={submit} className="space-y-4 self-start min-w-0">
       <h2 className="text-xl font-bold">{t.newReq}</h2>
       <label className="block font-medium">{t.decl}<input required maxLength={40} className={input + " mt-1 font-mono"} placeholder="2026-000000" value={f.decl} onChange={(e) => setF({ ...f, decl: e.target.value })} /></label>
-      <label className="block font-medium">{t.port}<input required maxLength={80} className={input + " mt-1"} placeholder="San Antonio" value={f.port} onChange={(e) => setF({ ...f, port: e.target.value })} /></label>
+      <label className="block font-medium">{t.port}<input required maxLength={80} className={input + " mt-1"} placeholder="Buenos Aires" value={f.port} onChange={(e) => setF({ ...f, port: e.target.value })} /></label>
       <div>
         <label className="block font-medium">{t.entry}<input required type="datetime-local" aria-describedby="storage-hint" className={input + " mt-1 min-w-0 max-w-full text-base"} value={f.entry} onChange={(e) => setF({ ...f, entry: e.target.value, demurrage: e.target.value ? demurrageFromEntry(e.target.value, f.days) : "" })} /></label>
         <p id="storage-hint" className="mt-2 text-sm text-muted-foreground">{t.entryHint}</p>
