@@ -5,3 +5,4 @@
 - [x] Usar Despacho n.º y las etiquetas operativas actuales en Google Sheets.
 - [x] Guardar nombres de destinatarios Gmail, mostrar sus nombres y conservar los correos para el envío.
 - [x] Verificar que los nombres persistan y que se puedan cambiar o quitar.
+- [x] Colocar Salir debajo del idioma y extender la foto de fondo a Configuración y Alertas.
